@@ -27,4 +27,7 @@ public class Usuario {
 
     @NotBlank
     private String password;
+    
+    @Enumerated(EnumType.STRING)
+    private Rol rol;
 }

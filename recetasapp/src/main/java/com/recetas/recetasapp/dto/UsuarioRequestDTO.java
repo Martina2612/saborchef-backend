@@ -7,10 +7,10 @@ import lombok.Data;
 @Data
 public class UsuarioRequestDTO {
 
-    @NotBlank
+    
     private String nombre;
 
-    @NotBlank
+    
     private String apellido;
 
     @Email

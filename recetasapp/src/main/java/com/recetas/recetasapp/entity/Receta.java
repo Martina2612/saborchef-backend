@@ -1,5 +1,6 @@
 package com.recetas.recetasapp.entity;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
@@ -53,6 +54,8 @@ public class Receta {
 
     @OneToMany(mappedBy = "receta", cascade = CascadeType.ALL)
     private List<Calificacion> calificaciones;
+
+    private LocalDateTime fechaCreacion;
 
     // Getters y Setters
 }

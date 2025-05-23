@@ -1,4 +1,4 @@
-package com.recetas.recetasapp.jwt.auth;
+package com.recetas.recetasapp.controller.auth;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;

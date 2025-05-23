@@ -1,4 +1,4 @@
-package com.recetas.recetasapp.jwt.auth;
+package com.recetas.recetasapp.controller.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

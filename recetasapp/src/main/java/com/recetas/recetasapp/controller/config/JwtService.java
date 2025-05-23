@@ -1,4 +1,4 @@
-package com.recetas.recetasapp.jwt.config;
+package com.recetas.recetasapp.controller.config;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;

@@ -1,34 +1,32 @@
-package com.recetas.recetasapp.controllers;
+package com.recetas.recetasapp.controller;
 
-import com.recetas.recetasapp.entity.AuthRequestDTO;
-import com.recetas.recetasapp.entity.AuthResponseDTO;
+import com.recetas.recetasapp.dto.LoginRequest;
+import com.recetas.recetasapp.dto.LoginResponse;
 import com.recetas.recetasapp.entity.Usuario;
-import com.recetas.recetasapp.repository.UsuarioRepository;
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.recetas.recetasapp.security.JwtUtil;
+import com.recetas.recetasapp.service.UsuarioService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
-
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api")
+@RequiredArgsConstructor
 public class AuthController {
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioService usuarioService;
+    private final JwtUtil jwtUtil;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody AuthRequestDTO request) {
-        Optional<Usuario> usuarioOpt = usuarioRepository.findByEmail(request.getEmail());
-
-        if (usuarioOpt.isPresent() && usuarioOpt.get().getPassword().equals(request.getPassword())) {
-            AuthResponseDTO response = new AuthResponseDTO();
-            response.setMensaje("Login exitoso");
-            response.setIdUsuario(usuarioOpt.get().getId());
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.status(401).body("Credenciales inválidas");
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        try {
+            Usuario usuario = usuarioService.login(request.getMail(), request.getPassword());
+            String token = jwtUtil.generateToken(usuario.getMail(), usuario.getRol().name());
+            return ResponseEntity.ok(new LoginResponse(token));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(401).body("Credenciales inválidas: " + e.getMessage());
         }
     }
+
+    // Otros endpoints como /registro, /verificar, etc.
 }

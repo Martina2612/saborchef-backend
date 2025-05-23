@@ -13,7 +13,8 @@ public class Alumno {
     private Long idAlumno;
 
     @OneToOne
-    @JoinColumn(name = "idUsuario", referencedColumnName = "id")
+    @MapsId
+    @JoinColumn(name = "idAlumno")
     private Usuario usuario;
 
     private String numeroTarjeta;

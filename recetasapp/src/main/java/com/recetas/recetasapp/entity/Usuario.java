@@ -20,10 +20,14 @@ public class Usuario {
     @NotBlank
     private String apellido;
 
+    @NotBlank
+    @Column(unique = true)
+    private String nickname;
+
     @Email
     @NotBlank
     @Column(unique = true)
-    private String email;
+    private String mail;
 
     @NotBlank
     private String password;
@@ -31,5 +35,6 @@ public class Usuario {
     @Enumerated(EnumType.STRING)
     private Rol rol;
 
-    private Boolean habilitado;
+    private Boolean habilitado=false;
+
 }

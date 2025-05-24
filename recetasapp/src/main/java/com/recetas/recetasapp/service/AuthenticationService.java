@@ -6,15 +6,15 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.recetas.recetasapp.controller.auth.AuthenticationRequest;
+import com.recetas.recetasapp.controller.auth.AuthenticationResponse;
+import com.recetas.recetasapp.controller.auth.RegisterRequest;
+import com.recetas.recetasapp.controller.config.JwtService;
 import com.recetas.recetasapp.entity.Usuario;
 import com.recetas.recetasapp.exception.auth.AliasAlreadyExistsException;
 import com.recetas.recetasapp.exception.auth.EmailAlreadyExistsException;
 import com.recetas.recetasapp.exception.auth.InvalidCredentialsException;
 import com.recetas.recetasapp.exception.auth.UserNotFoundException;
-import com.recetas.recetasapp.jwt.auth.AuthenticationRequest;
-import com.recetas.recetasapp.jwt.auth.AuthenticationResponse;
-import com.recetas.recetasapp.jwt.auth.RegisterRequest;
-import com.recetas.recetasapp.jwt.config.JwtService;
 import com.recetas.recetasapp.repository.UsuarioRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -36,10 +36,13 @@ public class AuthenticationService {
         }
 
         var user = Usuario.builder()
+                .nombre(request.getNombre())
+                .apellido(request.getApellido())
                 .alias(request.getAlias())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .rol(request.getRole())
+                .habilitado(true)
                 .build();
 
         repository.save(user);

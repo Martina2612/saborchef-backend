@@ -48,7 +48,7 @@ public class Usuario implements UserDetails{
     @Enumerated(EnumType.STRING)
     private Rol rol;
 
-    private Boolean habilitado=false;
+    private Boolean habilitado=true;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

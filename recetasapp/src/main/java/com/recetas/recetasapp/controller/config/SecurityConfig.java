@@ -29,6 +29,7 @@ public class SecurityConfig {
                         // Endpoints públicos y de error
                         .requestMatchers("/api/auth/**").permitAll() // Registro, login, etc.
                         .requestMatchers("/api/**").permitAll() 
+                        .requestMatchers("/api/recetas/**").permitAll() 
                         // .requestMatchers(HttpMethod.GET, "/books/**")
                         // .hasAnyAuthority(Role.USER.name(), Role.ADMIN.name())
                         // .requestMatchers(HttpMethod.GET,"/books/{id}").hasAnyAuthority(Role.USER.name())

@@ -1,7 +1,12 @@
 package com.recetas.recetasapp.controller;
-/* 
-import com.recetas.recetasapp.dto.*;
+
+import com.recetas.recetasapp.dto.request.RecetaCrearRequest;
+import com.recetas.recetasapp.dto.request.RecetaFiltroRequest;
+import com.recetas.recetasapp.dto.response.RecetaDetalleResponse;
+import com.recetas.recetasapp.dto.response.RecetaResumenResponse;
+import com.recetas.recetasapp.entity.Receta;
 import com.recetas.recetasapp.service.RecetaService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,52 +16,77 @@ import java.util.List;
 @RequestMapping("/api/recetas")
 public class RecetaController {
 
-    private final RecetaService recetaService;
-
-    public RecetaController(RecetaService recetaService) {
-        this.recetaService = recetaService;
-    }
+    @Autowired
+    private RecetaService recetaService;
 
     @GetMapping
-    public ResponseEntity<List<RecetaResumenDTO>> listarRecetas(
+    public ResponseEntity<List<RecetaResumenResponse>> listarRecetas(
             @RequestParam(required = false) Long idUsuario,
             @RequestParam(required = false) Long idTipo,
             @RequestParam(required = false) String orden) {
         return ResponseEntity.ok(recetaService.listarRecetas(idUsuario, idTipo, orden));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<RecetaDetalleDTO> obtenerReceta(@PathVariable Long id) {
-        return ResponseEntity.ok(recetaService.obtenerRecetaPorId(id));
+    @PostMapping
+    public ResponseEntity<Void> crearReceta(@RequestBody RecetaCrearRequest request) {
+        recetaService.crearReceta(request);
+        return ResponseEntity.status(201).build();
     }
 
-    @PostMapping
-    public ResponseEntity<RecetaDetalleDTO> crearReceta(@RequestBody RecetaCrearDTO dto) {
-        return ResponseEntity.status(201).body(recetaService.crearReceta(dto));
+    @GetMapping("/{id}")
+    public ResponseEntity<RecetaDetalleResponse> obtener(@PathVariable Long id) {
+        return ResponseEntity.ok(recetaService.obtenerReceta(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<RecetaDetalleDTO> actualizarReceta(@PathVariable Long id, @RequestBody RecetaCrearDTO dto) {
-        return ResponseEntity.ok(recetaService.actualizarReceta(id, dto));
+    public ResponseEntity<Void> actualizar(@PathVariable Long id, @RequestBody RecetaCrearRequest request) {
+        recetaService.actualizarReceta(id, request);
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarReceta(@PathVariable Long id) {
+    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         recetaService.eliminarReceta(id);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<RecetaResumenDTO>> buscarPorNombre(
-            @RequestParam String nombre,
-            @RequestParam(required = false) String orden) {
+    public ResponseEntity<List<RecetaResumenResponse>> buscarPorNombre(@RequestParam String nombre, @RequestParam(required = false) String orden) {
         return ResponseEntity.ok(recetaService.buscarPorNombre(nombre, orden));
     }
 
     @GetMapping("/tipo/{tipo}")
-    public ResponseEntity<List<RecetaResumenDTO>> buscarPorTipo(
-            @PathVariable String tipo,
-            @RequestParam(required = false) String orden) {
+    public ResponseEntity<List<RecetaResumenResponse>> buscarPorTipo(@PathVariable String tipo, @RequestParam(required = false) String orden) {
         return ResponseEntity.ok(recetaService.buscarPorTipo(tipo, orden));
     }
-}*/
+
+    @GetMapping("/ingrediente")
+    public ResponseEntity<List<RecetaResumenResponse>> buscarPorIngrediente(@RequestParam String nombreIngrediente, @RequestParam(required = false) String orden) {
+        return ResponseEntity.ok(recetaService.buscarPorIngrediente(nombreIngrediente, orden));
+    }
+
+    @GetMapping("/sin-ingrediente")
+    public ResponseEntity<List<RecetaResumenResponse>> buscarSinIngrediente(@RequestParam String nombreIngrediente, @RequestParam(required = false) String orden) {
+        return ResponseEntity.ok(recetaService.buscarSinIngrediente(nombreIngrediente, orden));
+    }
+
+    @GetMapping("/buscar/usuario")
+    public ResponseEntity<List<RecetaResumenResponse>> buscarPorUsuario(
+            @RequestParam String nombre,
+            @RequestParam(required = false) String orden) {
+        return ResponseEntity.ok(recetaService.buscarPorUsuario(nombre, orden));
+    }
+
+    @GetMapping("/ultimas3")
+    public List<RecetaDetalleResponse> obtenerUltimas3Recetas() {
+        return recetaService.obtenerUltimas3Recetas();
+    }
+
+    // Endpoint para buscar recetas por filtros
+    @PostMapping("/buscar")
+    public ResponseEntity<List<RecetaResumenResponse>> buscarPorFiltros(@RequestBody RecetaFiltroRequest filtro) {
+        List<RecetaResumenResponse> resultados = recetaService.buscarPorFiltros(filtro);
+        return ResponseEntity.ok(resultados);
+    }
+
+}

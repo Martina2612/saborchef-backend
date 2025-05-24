@@ -27,9 +27,13 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(req -> req
                         // Endpoints públicos y de error
-                        .requestMatchers("/api/auth/**").permitAll() // Registro, login, etc.
-                        .requestMatchers("/api/**").permitAll() 
-                        .requestMatchers("/api/recetas/**").permitAll() 
+                        .requestMatchers(
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/swagger-resources/**",
+                        "/webjars/**"
+                    ).permitAll()
                         // .requestMatchers(HttpMethod.GET, "/books/**")
                         // .hasAnyAuthority(Role.USER.name(), Role.ADMIN.name())
                         // .requestMatchers(HttpMethod.GET,"/books/{id}").hasAnyAuthority(Role.USER.name())

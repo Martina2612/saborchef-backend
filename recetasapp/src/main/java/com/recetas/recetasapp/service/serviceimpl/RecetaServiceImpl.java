@@ -14,6 +14,12 @@ import com.recetas.recetasapp.repository.UsuarioRepository;
 import com.recetas.recetasapp.service.RecetaService;
 import com.recetas.recetasapp.specification.RecetaSpecifications;
 
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
+
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -301,48 +307,73 @@ public class RecetaServiceImpl implements RecetaService {
     }
 
     @Override
-    public List<RecetaResumenResponse> buscarPorFiltros(RecetaFiltroRequest filtro) {
-        Specification<Receta> spec = Specification.where(null);
+public List<RecetaResumenResponse> buscarPorFiltros(RecetaFiltroRequest filtro) {
+    Specification<Receta> spec = Specification.where(null);
 
-        if (filtro.getNombre() != null && !filtro.getNombre().isEmpty()) {
-            spec = spec.and((root, query, cb) ->
-                cb.like(cb.lower(root.get("nombreReceta")), "%" + filtro.getNombre().toLowerCase() + "%"));
-        }
+    if (filtro.getNombre() != null && !filtro.getNombre().isEmpty()) {
+        spec = spec.and((root, query, cb) ->
+            cb.like(cb.lower(root.get("nombreReceta")), "%" + filtro.getNombre().toLowerCase() + "%"));
+    }
 
-        if (filtro.getUsuario() != null && !filtro.getUsuario().isEmpty()) {
-            spec = spec.and((root, query, cb) ->
-                cb.like(cb.lower(root.get("usuario").get("nombre")), "%" + filtro.getUsuario().toLowerCase() + "%"));
-        }
+    if (filtro.getUsuario() != null && !filtro.getUsuario().isEmpty()) {
+        spec = spec.and((root, query, cb) -> {
+            Predicate[] predicates = filtro.getUsuario().stream()
+                .map(nombreUsuario -> cb.like(cb.lower(root.get("usuario").get("nombre")), "%" + nombreUsuario.toLowerCase() + "%"))
+                .toArray(Predicate[]::new);
+            return cb.or(predicates);
+        });
+    }
 
-        if (filtro.getTipo() != null && !filtro.getTipo().isEmpty()) {
-            try {
-                Categoria cat = Categoria.valueOf(filtro.getTipo().toUpperCase());
-                spec = spec.and((root, query, cb) ->
-                    cb.equal(root.get("tipo").get("descripcion"), cat));
-            } catch (IllegalArgumentException e) {
-                throw new ResourceNotFoundException("Tipo de receta inválido: " + filtro.getTipo());
-            }
-        }
+    if (filtro.getTipo() != null && !filtro.getTipo().isEmpty()) {
+        spec = spec.and((root, query, cb) -> {
+            Predicate[] predicates = filtro.getTipo().stream()
+                .map(tipoStr -> {
+                    try {
+                        Categoria cat = Categoria.valueOf(tipoStr.toUpperCase());
+                        return cb.equal(root.get("tipo").get("descripcion"), cat);
+                    } catch (IllegalArgumentException e) {
+                        throw new ResourceNotFoundException("Tipo de receta inválido: " + tipoStr);
+                    }
+                })
+                .toArray(Predicate[]::new);
+            return cb.or(predicates);
+        });
+    }
 
-        if (filtro.getIngredientesIncluidos() != null && !filtro.getIngredientesIncluidos().isEmpty()) {
-            for (String ing : filtro.getIngredientesIncluidos()) {
-                spec = spec.and((root, query, cb) -> {
-                    var joinUtilizado = root.join("utilizados");
-                    var joinIngrediente = joinUtilizado.join("ingrediente");
-                    return cb.equal(cb.lower(joinIngrediente.get("nombre")), ing.toLowerCase());
-                });
-            }
-        }
+    if (filtro.getIngredientesIncluidos() != null && !filtro.getIngredientesIncluidos().isEmpty()) {
+        spec = spec.and((root, query, cb) -> {
+            var joinUtilizado = root.join("utilizados");
+            var joinIngrediente = joinUtilizado.join("ingrediente");
+            Predicate[] predicates = filtro.getIngredientesIncluidos().stream()
+                .map(ing -> cb.equal(cb.lower(joinIngrediente.get("nombre")), ing.toLowerCase()))
+                .toArray(Predicate[]::new);
+            query.distinct(true); // para evitar recetas duplicadas
+            return cb.or(predicates);
+        });
+    }
 
-        if (filtro.getIngredientesExcluidos() != null && !filtro.getIngredientesExcluidos().isEmpty()) {
-            for (String ing : filtro.getIngredientesExcluidos()) {
-                spec = spec.and((root, query, cb) -> {
-                    var joinUtilizado = root.join("utilizados");
-                    var joinIngrediente = joinUtilizado.join("ingrediente");
-                    return cb.notEqual(cb.lower(joinIngrediente.get("nombre")), ing.toLowerCase());
-                });
-            }
-        }
+    if (filtro.getIngredientesExcluidos() != null && !filtro.getIngredientesExcluidos().isEmpty()) {
+        spec = spec.and((root, query, cb) -> {
+            Subquery<Long> subquery = query.subquery(Long.class);
+            Root<Receta> subRoot = subquery.from(Receta.class);
+            Join<?, ?> subJoinUtilizado = subRoot.join("utilizados");
+            Join<?, ?> subJoinIngrediente = subJoinUtilizado.join("ingrediente");
+
+            subquery.select(subRoot.get("id"))
+                    .where(
+                        cb.and(
+                            cb.equal(subRoot.get("id"), root.get("id")),
+                            subJoinIngrediente.get("nombre").in(
+                                filtro.getIngredientesExcluidos().stream()
+                                    .map(String::toLowerCase)
+                                    .toList()
+                            )
+                        )
+                    );
+
+            return cb.not(cb.exists(subquery));
+        });
+    }
 
         Sort sort = Sort.unsorted();
         if ("nombre_asc".equalsIgnoreCase(filtro.getOrden())) {

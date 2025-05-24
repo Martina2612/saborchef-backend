@@ -2,16 +2,17 @@ package com.recetas.recetasapp.repository;
 
 import com.recetas.recetasapp.entity.Receta;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
-/* 
-@Repository
-public interface RecetaRepository extends JpaRepository<Receta, Long> {
+
+public interface RecetaRepository extends JpaRepository<Receta, Long>, JpaSpecificationExecutor<Receta> {
     List<Receta> findByUsuarioId(Long idUsuario);
-    List<Receta> findByTipoIdTipo(Long idTipo);
-    List<Receta> findByNombreRecetaContainingIgnoreCase(String nombre);
-    List<Receta> findByTipoDescripcionIgnoreCase(String tipo);
-    List<Receta> findByIngredientesContainingIgnoreCase(String ingrediente);
-    List<Receta> findTop3ByOrderByFechaCreacionDesc();
-}*/
+
+    //Este va a servir para la screen de inicio que devuelve las 3 ultimas recetas subidas HABILITADAS
+    @Query("SELECT r FROM Receta r WHERE r.habilitada = false ORDER BY r.fechaCreacion DESC")
+    List<Receta> findTop3ByOrderByFechaCreacionDescLimit3();
+
+}

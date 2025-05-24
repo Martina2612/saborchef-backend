@@ -1,20 +1,24 @@
 package com.recetas.recetasapp.service;
 
-import com.recetas.recetasapp.dto.RecetaCrearDTO;
-import com.recetas.recetasapp.dto.RecetaDetalleDTO;
-import com.recetas.recetasapp.dto.RecetaResumenDTO;
+import com.recetas.recetasapp.dto.request.RecetaCrearRequest;
+import com.recetas.recetasapp.dto.request.RecetaFiltroRequest;
+import com.recetas.recetasapp.dto.response.RecetaDetalleResponse;
+import com.recetas.recetasapp.dto.response.RecetaResumenResponse;
+import com.recetas.recetasapp.entity.Receta;
 
 import java.util.List;
 
-import org.springframework.stereotype.Service;
-/* 
-@Service
 public interface RecetaService {
-    List<RecetaResumenDTO> listarRecetas(Long idUsuario, Long idTipo, String orden);
-    RecetaDetalleDTO obtenerRecetaPorId(Long id);
-    RecetaDetalleDTO crearReceta(RecetaCrearDTO recetaCrearDTO);
-    RecetaDetalleDTO actualizarReceta(Long id, RecetaCrearDTO recetaCrearDTO);
+    void crearReceta(RecetaCrearRequest request);
+    void actualizarReceta(Long id, RecetaCrearRequest request);
     void eliminarReceta(Long id);
-    List<RecetaResumenDTO> buscarPorNombre(String nombre, String orden);
-    List<RecetaResumenDTO> buscarPorTipo(String tipo, String orden);
-}*/
+    RecetaDetalleResponse obtenerReceta(Long id);
+    List<RecetaResumenResponse> listarRecetas(Long idUsuario, Long idTipo, String orden);
+    List<RecetaResumenResponse> buscarPorNombre(String nombre, String orden);
+    List<RecetaResumenResponse> buscarPorTipo(String tipo, String orden);
+    List<RecetaResumenResponse> buscarPorIngrediente(String nombre, String orden);
+    List<RecetaResumenResponse> buscarSinIngrediente(String nombre, String orden);
+    List<RecetaResumenResponse> buscarPorUsuario(String nombreUsuario, String orden);
+    List<RecetaResumenResponse> buscarPorFiltros(RecetaFiltroRequest filtro);
+    List<RecetaDetalleResponse> obtenerUltimas3Recetas();
+}

@@ -5,8 +5,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.recetas.recetasapp.entity.Usuario;
+import com.recetas.recetasapp.exception.auth.UserNotFoundException;
 import com.recetas.recetasapp.entity.Alumno;
 import com.recetas.recetasapp.dto.AlumnoActualizarDTO;
+import com.recetas.recetasapp.dto.RegistroConfirmarDTO;
 import com.recetas.recetasapp.dto.ResetPasswordDto;
 import com.recetas.recetasapp.repository.UsuarioRepository;
 import com.recetas.recetasapp.repository.AlumnoRepository;
@@ -63,6 +65,31 @@ public String resetearContraseña(ResetPasswordDto datos) {
 
     return "Contraseña reseteada correctamente";
 }
+
+@Override
+@Transactional
+public void confirmarRegistro(RegistroConfirmarDTO dto) {
+    Usuario usuario = usuarioRepository.findByEmail(dto.getMail())
+    .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con el correo: " + dto.getMail()));
+
+
+    usuario.setHabilitado(true);
+    usuarioRepository.save(usuario);
+
+    
+    // usuario.setNombre(dto.getNombre());
+    // usuario.setApellido(dto.getApellido());
+    // usuario.setPassword(passwordEncoder.encode(dto.getPassword()));
+    // usuarioRepository.save(usuario);
+}
+
+@Override
+public Usuario getUserById(Long id) {
+    return usuarioRepository.findById(id)
+            .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + id));
+}
+
+
 
 
 

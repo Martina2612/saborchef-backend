@@ -42,7 +42,7 @@ public class AuthenticationService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .rol(request.getRole())
-                .habilitado(true)
+                .habilitado(false)
                 .build();
 
         repository.save(user);
@@ -69,7 +69,12 @@ public class AuthenticationService {
     }
 
     var usuario = repository.findByAlias(request.getAlias())
-            .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con el alias: " + request.getAlias()));
+        .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con el alias: " + request.getAlias()));
+
+    if (!usuario.getHabilitado()) {
+        throw new InvalidCredentialsException("La cuenta no está habilitada. Por favor, confirma tu registro.");
+}
+
 
     var jwtToken = jwtService.generateToken(usuario);
 

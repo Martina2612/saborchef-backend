@@ -9,7 +9,8 @@ public class RecetaCrearRequest {
     private String nombreReceta;
     private String descripcionReceta;
     private String fotoPrincipal;
-    private Integer cantidadPersonas;
+    private Integer duracion;
+    private Integer porciones;
     private String tipo; // nombre de la categoría (enum Categoria)
     private List<IngredienteCantidad> ingredientes;
     private List<PasoCrear> pasos;

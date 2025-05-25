@@ -1,5 +1,6 @@
 package com.recetas.recetasapp.service;
 
+import com.recetas.recetasapp.exception.auth.BadRequestException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -28,6 +29,21 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
 
     public AuthenticationResponse register(RegisterRequest request) {
+        // 1. Validar formato de email
+        String email = request.getEmail();
+        if (!email.matches("^[A-Za-z](.*)([@]{1})(.{1,})(\\\\.)(.{1,})")) {
+            throw new BadRequestException("Formato de email inválido.");
+        }
+
+        // 2. Validar fortaleza de contraseña
+        String pw = request.getPassword();
+        if (pw.length() < 6 ||
+            !pw.matches(".*\\d.*") ||
+            !pw.matches(".*[A-Za-z].*")) {
+            throw new BadRequestException(
+              "Contraseña debe ser alfanumérica y tener al menos 6 caracteres.");
+        }
+        
         if (repository.existsByEmail(request.getEmail())) {
             throw new EmailAlreadyExistsException("El correo electrónico ya está registrado.");
         }

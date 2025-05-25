@@ -32,7 +32,7 @@ public class SecurityConfig {
                         "/swagger-ui/**",
                         "/swagger-ui.html",
                         "/swagger-resources/**",
-                        "/webjars/**"
+                        "/webjars/**","api/**","/api/auth/**","/api/recetas/**"
                     ).permitAll()
                         // .requestMatchers(HttpMethod.GET, "/books/**")
                         // .hasAnyAuthority(Role.USER.name(), Role.ADMIN.name())

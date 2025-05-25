@@ -101,7 +101,7 @@ public class RecetaServiceImpl implements RecetaService {
         recetaNueva.setNombreReceta(req.getNombreReceta());
         recetaNueva.setDescripcionReceta(req.getDescripcionReceta());
         recetaNueva.setFotoPrincipal(req.getFotoPrincipal());
-        recetaNueva.setCantidadPersonas(req.getCantidadPersonas());
+        recetaNueva.setPorciones(req.getPorciones());
         recetaNueva.setFechaCreacion(LocalDateTime.now());
 
         // Guardar la receta para que tenga ID (necesario para las relaciones)
@@ -178,7 +178,7 @@ public class RecetaServiceImpl implements RecetaService {
         existing.setNombreReceta(request.getNombreReceta());
         existing.setDescripcionReceta(request.getDescripcionReceta());
         existing.setFotoPrincipal(request.getFotoPrincipal());
-        existing.setCantidadPersonas(request.getCantidadPersonas());
+        existing.setPorciones(request.getPorciones());
 
         // Actualiza tipo
         Categoria cat;
@@ -413,7 +413,7 @@ public List<RecetaResumenResponse> buscarPorFiltros(RecetaFiltroRequest filtro) 
     r.setNombre(receta.getNombreReceta());
     r.setDescripcion(receta.getDescripcionReceta());
     r.setFotoPrincipal(receta.getFotoPrincipal());
-    r.setCantidadPersonas(receta.getCantidadPersonas());
+    r.setPorciones(receta.getPorciones());
     r.setTipo(receta.getTipo().getDescripcion().name());
     r.setNombreUsuario(receta.getUsuario().getNombre());
     r.setFotos(receta.getFotos().stream().map(Foto::getUrlFoto).toList());

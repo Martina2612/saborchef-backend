@@ -10,7 +10,7 @@ public class RecetaDetalleResponse {
     private String nombre;
     private String descripcion;
     private String fotoPrincipal;
-    private Integer cantidadPersonas;
+    private Integer porciones;
     private String tipo;
     private String nombreUsuario;
     private List<IngredienteDetalle> ingredientes;
@@ -18,6 +18,7 @@ public class RecetaDetalleResponse {
     private List<String> fotos;
     private List<ComentarioResponse> comentarios;
     private Double promedioCalificacion;
+    private Integer duracion;
 
     @Data
     public static class IngredienteDetalle {

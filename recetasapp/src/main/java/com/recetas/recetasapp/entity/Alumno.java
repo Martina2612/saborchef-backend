@@ -15,11 +15,11 @@ public class Alumno {
     @OneToOne
     @MapsId
     @JoinColumn(name = "idAlumno")
+    
+    
     private Usuario usuario;
-
     private String numeroTarjeta;
     private String dniFrente;
     private String dniDorso;
-    private String nombre;
     private String cuentaCorriente;
 }

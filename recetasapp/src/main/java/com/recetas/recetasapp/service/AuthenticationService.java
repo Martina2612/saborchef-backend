@@ -35,17 +35,25 @@ public class AuthenticationService {
             throw new AliasAlreadyExistsException("El alias ya está registrado.");
         }
 
+        String codigoGenerado = String.valueOf((int)(Math.random() * 9000) + 1000); // 4 dígitos
+
+
         var user = Usuario.builder()
-                .nombre(request.getNombre())
-                .apellido(request.getApellido())
-                .alias(request.getAlias())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .rol(request.getRole())
-                .habilitado(false)
-                .build();
+            .nombre(request.getNombre())
+            .apellido(request.getApellido())
+            .alias(request.getAlias())
+            .email(request.getEmail())
+            .password(passwordEncoder.encode(request.getPassword()))
+            .rol(request.getRole())
+            .habilitado(false)
+            .codigoConfirmacion(codigoGenerado)
+            .build();
 
         repository.save(user);
+
+        // Simular envío por mail (en producción usar MailService)
+        System.out.println("Código de confirmación enviado al correo: " + codigoGenerado);
+
         
         var jwtToken = jwtService.generateToken(user);
 

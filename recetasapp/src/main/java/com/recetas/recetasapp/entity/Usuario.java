@@ -50,6 +50,10 @@ public class Usuario implements UserDetails{
 
     private Boolean habilitado=true;
 
+    @Column
+    private String codigoConfirmacion;
+
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.singleton(() -> "ROLE_" + rol.name());

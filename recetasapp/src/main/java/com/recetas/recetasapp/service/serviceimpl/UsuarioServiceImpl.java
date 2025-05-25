@@ -8,6 +8,7 @@ import com.recetas.recetasapp.entity.Usuario;
 import com.recetas.recetasapp.exception.auth.UserNotFoundException;
 import com.recetas.recetasapp.entity.Alumno;
 import com.recetas.recetasapp.dto.AlumnoActualizarDTO;
+import com.recetas.recetasapp.dto.ConfirmacionCodigoDTO;
 import com.recetas.recetasapp.dto.RegistroConfirmarDTO;
 import com.recetas.recetasapp.dto.ResetPasswordDto;
 import com.recetas.recetasapp.repository.UsuarioRepository;
@@ -68,20 +69,20 @@ public String resetearContraseña(ResetPasswordDto datos) {
 
 @Override
 @Transactional
-public void confirmarRegistro(RegistroConfirmarDTO dto) {
-    Usuario usuario = usuarioRepository.findByEmail(dto.getMail())
-    .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con el correo: " + dto.getMail()));
+public void confirmarCuentaConCodigo(ConfirmacionCodigoDTO dto) {
+    Usuario usuario = usuarioRepository.findByEmail(dto.getEmail())
+        .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con el correo: " + dto.getEmail()));
 
-
-    usuario.setHabilitado(true);
-    usuarioRepository.save(usuario);
-
-    
-    // usuario.setNombre(dto.getNombre());
-    // usuario.setApellido(dto.getApellido());
-    // usuario.setPassword(passwordEncoder.encode(dto.getPassword()));
-    // usuarioRepository.save(usuario);
+    if (usuario.getCodigoConfirmacion().equals(dto.getCodigo())) {
+        usuario.setHabilitado(true);
+        usuarioRepository.save(usuario);
+    } else {
+        usuario.setHabilitado(false); // seguridad
+        usuarioRepository.save(usuario);
+        throw new RuntimeException("Código de confirmación inválido");
+    }
 }
+
 
 @Override
 public Usuario getUserById(Long id) {

@@ -1,8 +1,10 @@
 package com.recetas.recetasapp.controller;
 
 import com.recetas.recetasapp.dto.AlumnoActualizarDTO;
+import com.recetas.recetasapp.dto.RegistroConfirmarDTO;
 import com.recetas.recetasapp.dto.ResetPasswordDto;
 import com.recetas.recetasapp.entity.Alumno;
+import com.recetas.recetasapp.entity.Usuario;
 import com.recetas.recetasapp.service.UsuarioService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +36,18 @@ public class UsuarioController {
 public String resetearContraseña(@RequestBody ResetPasswordDto datos) {
     return usuarioService.resetearContraseña(datos);
 }
+
+@PostMapping("/confirmar")
+public void confirmarRegistro(@RequestBody RegistroConfirmarDTO dto) {
+    usuarioService.confirmarRegistro(dto);
+}
+
+@GetMapping("/{id}")
+public Usuario getUsuarioById(@PathVariable(name = "id") Long id) {
+    return usuarioService.getUserById(id);
+}
+
+
 
 }
 

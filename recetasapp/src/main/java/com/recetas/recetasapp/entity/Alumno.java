@@ -20,6 +20,5 @@ public class Alumno {
     private String numeroTarjeta;
     private String dniFrente;
     private String dniDorso;
-    private String nombre;
     private String cuentaCorriente;
 }

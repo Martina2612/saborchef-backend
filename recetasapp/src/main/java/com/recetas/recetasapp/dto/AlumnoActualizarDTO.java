@@ -8,6 +8,6 @@ public class AlumnoActualizarDTO {
     private String dniFrente; // path a la imagen, o base64 si estás enviando eso
     private String dniDorso;
     private String cuentaCorriente;
-    private String nombre; // puede ser redundante si ya lo tiene Usuario
+    
 }
 

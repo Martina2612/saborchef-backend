@@ -3,6 +3,7 @@ package com.recetas.recetasapp.controller;
 import com.recetas.recetasapp.dto.request.CalificacionRequest;
 import com.recetas.recetasapp.dto.request.ComentarioRequest;
 import com.recetas.recetasapp.dto.response.ComentarioResponse;
+import com.recetas.recetasapp.dto.response.TopRecetaResponse;
 import com.recetas.recetasapp.service.CalificacionService;
 
 import lombok.RequiredArgsConstructor;
@@ -42,4 +43,11 @@ public class CalificacionController {
     public ResponseEntity<Double> obtenerPromedio(@PathVariable Long idReceta) {
         return ResponseEntity.ok(calificacionService.obtenerPromedioCalificacion(idReceta));
     }
+
+    @GetMapping("/top")
+    public ResponseEntity<List<TopRecetaResponse>> obtenerTopRecetas(
+            @RequestParam(defaultValue = "12") int cantidad) {
+        return ResponseEntity.ok(calificacionService.obtenerTopRecetas(cantidad));
+    }
+
 }

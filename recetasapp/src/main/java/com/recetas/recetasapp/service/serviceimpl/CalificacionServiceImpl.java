@@ -3,6 +3,7 @@ package com.recetas.recetasapp.service.serviceimpl;
 import com.recetas.recetasapp.dto.request.CalificacionRequest;
 import com.recetas.recetasapp.dto.request.ComentarioRequest;
 import com.recetas.recetasapp.dto.response.ComentarioResponse;
+import com.recetas.recetasapp.dto.response.TopRecetaResponse;
 import com.recetas.recetasapp.entity.Calificacion;
 import com.recetas.recetasapp.entity.Receta;
 import com.recetas.recetasapp.entity.Usuario;
@@ -13,6 +14,9 @@ import com.recetas.recetasapp.service.CalificacionService;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -89,4 +93,22 @@ public class CalificacionServiceImpl implements CalificacionService {
                 .average()
                 .orElse(0.0);
     }
+
+    @Override
+    public List<TopRecetaResponse> obtenerTopRecetas(int cantidad) {
+        Pageable topN = PageRequest.of(0, cantidad);
+        List<Object[]> resultados = calificacionRepository.findTopRecetasConPromedio(topN);
+
+        return resultados.stream().map(obj -> {
+            Receta receta = (Receta) obj[0];
+            Double promedio = (Double) obj[1];
+            TopRecetaResponse dto = new TopRecetaResponse();
+            dto.setIdReceta(receta.getIdReceta());
+            dto.setNombreReceta(receta.getNombreReceta());
+            dto.setFotoPrincipal(receta.getFotoPrincipal());
+            dto.setPromedioCalificacion(promedio);
+            return dto;
+        }).toList();
+    }
+
 }

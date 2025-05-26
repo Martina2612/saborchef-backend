@@ -89,4 +89,12 @@ public class RecetaController {
         return ResponseEntity.ok(resultados);
     }
 
+    //ENDPOINT PARA EL HOME
+
+    @GetMapping("/ultimas")
+    public ResponseEntity<List<RecetaDetalleResponse>> getUltimasRecetas() {
+        List<RecetaDetalleResponse> ultimas = recetaService.obtenerUltimasRecetas();
+        return ResponseEntity.ok(ultimas);
+    }
+
 }

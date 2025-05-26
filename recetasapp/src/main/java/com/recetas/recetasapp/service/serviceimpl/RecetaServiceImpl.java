@@ -21,6 +21,8 @@ import jakarta.persistence.criteria.Subquery;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -52,6 +54,22 @@ public class RecetaServiceImpl implements RecetaService {
     public List<RecetaDetalleResponse> obtenerUltimas3Recetas() {
         List<Receta> recetas = recetaRepository.findTop3ByOrderByFechaCreacionDescLimit3();
         return recetas.stream()
+                .map(this::mapToDetalle)
+                .toList();
+    }
+
+     @Override
+    public List<RecetaDetalleResponse> obtenerTopRecetas() {
+        return recetaRepository.findTop12ByOrderByPromedioCalificacionDesc()
+                .stream()
+                .map(this::mapToDetalle)
+                .toList();
+    }
+
+    @Override
+    public List<RecetaDetalleResponse> obtenerUltimasRecetas() {
+        return recetaRepository.findTop12ByOrderByFechaCreacionDesc()
+                .stream()
                 .map(this::mapToDetalle)
                 .toList();
     }
@@ -191,8 +209,6 @@ public class RecetaServiceImpl implements RecetaService {
                 .orElseGet(() -> tipoRecetaRepository.save(new TipoReceta(null, cat)));
         existing.setTipo(tipo);
 
-        // Actualiza usuario si necesario, o dejar igual (normalmente no se cambia)
-        // existing.setUsuario(usuario);
 
         // Actualizar ingredientes utilizados (eliminas los anteriores y agregas nuevos)
         existing.getUtilizados().clear();
@@ -353,27 +369,10 @@ public List<RecetaResumenResponse> buscarPorFiltros(RecetaFiltroRequest filtro) 
     }
 
     if (filtro.getIngredientesExcluidos() != null && !filtro.getIngredientesExcluidos().isEmpty()) {
-        spec = spec.and((root, query, cb) -> {
-            Subquery<Long> subquery = query.subquery(Long.class);
-            Root<Receta> subRoot = subquery.from(Receta.class);
-            Join<?, ?> subJoinUtilizado = subRoot.join("utilizados");
-            Join<?, ?> subJoinIngrediente = subJoinUtilizado.join("ingrediente");
-
-            subquery.select(subRoot.get("id"))
-                    .where(
-                        cb.and(
-                            cb.equal(subRoot.get("id"), root.get("id")),
-                            subJoinIngrediente.get("nombre").in(
-                                filtro.getIngredientesExcluidos().stream()
-                                    .map(String::toLowerCase)
-                                    .toList()
-                            )
-                        )
-                    );
-
-            return cb.not(cb.exists(subquery));
-        });
+    for (String nombreIng : filtro.getIngredientesExcluidos()) {
+        spec = spec.and(sinIngrediente(nombreIng));
     }
+}
 
         Sort sort = Sort.unsorted();
         if ("nombre_asc".equalsIgnoreCase(filtro.getOrden())) {

@@ -21,6 +21,5 @@ public interface RecetaService {
     List<RecetaResumenResponse> buscarPorUsuario(String nombreUsuario, String orden);
     List<RecetaResumenResponse> buscarPorFiltros(RecetaFiltroRequest filtro);
     List<RecetaDetalleResponse> obtenerUltimas3Recetas();
-    List<RecetaDetalleResponse> obtenerTopRecetas();
     List<RecetaDetalleResponse> obtenerUltimasRecetas();
 }

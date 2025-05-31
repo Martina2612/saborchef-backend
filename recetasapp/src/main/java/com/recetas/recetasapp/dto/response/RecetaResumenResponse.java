@@ -9,9 +9,10 @@ public class RecetaResumenResponse {
     private Long idReceta;
     private String nombre;
     private String fotoPrincipal;
-    private Integer cantidadPersonas;
+    private Integer porciones;
     private Double promedioCalificacion;
     private String tipo;
     private String nombreUsuario;
     private LocalDateTime fechaCreacion;
+    private Integer duracion;
 }

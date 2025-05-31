@@ -17,8 +17,6 @@ public interface RecetaRepository extends JpaRepository<Receta, Long>, JpaSpecif
     @Query("SELECT r FROM Receta r WHERE r.habilitada = false ORDER BY r.fechaCreacion DESC")
     List<Receta> findTop3ByOrderByFechaCreacionDescLimit3();
 
-    // Para top recetas (12 con mayor calificación)
-    List<Receta> findTop12ByOrderByPromedioCalificacionDesc();
 
     // Para últimas recetas publicadas (12 más recientes)
     List<Receta> findTop12ByOrderByFechaCreacionDesc();

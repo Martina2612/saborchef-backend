@@ -73,4 +73,7 @@ public class RecetaSpecifications {
             "%" + nombreUsuario.toLowerCase() + "%"
         );
 }
+    public static Specification<Receta> conHabilitada() {
+            return (root, query, cb) -> cb.isTrue(root.get("habilitada"));
+        }
 }

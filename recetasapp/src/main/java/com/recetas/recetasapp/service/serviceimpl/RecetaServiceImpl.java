@@ -52,31 +52,32 @@ public class RecetaServiceImpl implements RecetaService {
 
     @Override
     public List<RecetaDetalleResponse> obtenerUltimas3Recetas() {
-        List<Receta> recetas = recetaRepository.findTop3ByOrderByFechaCreacionDescLimit3();
-        return recetas.stream()
-                .map(this::mapToDetalle)
-                .toList();
+        return recetaRepository
+        .findAll(
+            Specification.where(conHabilitada()),
+            PageRequest.of(0, 3, Sort.by("fechaCreacion").descending())
+        )
+        .stream()
+        .map(this::mapToDetalle)
+        .toList();
     }
 
-     @Override
-    public List<RecetaDetalleResponse> obtenerTopRecetas() {
-        return recetaRepository.findTop12ByOrderByPromedioCalificacionDesc()
-                .stream()
-                .map(this::mapToDetalle)
-                .toList();
-    }
 
     @Override
     public List<RecetaDetalleResponse> obtenerUltimasRecetas() {
-        return recetaRepository.findTop12ByOrderByFechaCreacionDesc()
-                .stream()
-                .map(this::mapToDetalle)
-                .toList();
+        return recetaRepository
+        .findAll(
+            Specification.where(conHabilitada()),
+            PageRequest.of(0, 12, Sort.by("fechaCreacion").descending())
+        )
+        .stream()
+        .map(this::mapToDetalle)
+        .toList();
     }
 
     @Override
     public List<RecetaResumenResponse> listarRecetas(Long u, Long t, String o) {
-        var spec = Specification.<Receta>where(null);
+        Specification<Receta> spec = Specification.where(conHabilitada());
         if (u!=null) spec = spec.and(conUsuario(u));
         if (t!=null) spec = spec.and(conTipoId(t));
         return recetaRepository.findAll(spec, Sort.unsorted()).stream()
@@ -279,7 +280,9 @@ public class RecetaServiceImpl implements RecetaService {
 
     @Override
     public List<RecetaResumenResponse> buscarPorNombre(String nombre, String orden) {
-        Specification<Receta> spec = Specification.where(conNombre(nombre));
+         Specification<Receta> spec = Specification
+        .where(conHabilitada())
+        .and(conNombre(nombre));
         return recetaRepository.findAll(spec).stream()
                 .map(this::mapToResumen)
                 .sorted(getComparator(orden))
@@ -288,7 +291,9 @@ public class RecetaServiceImpl implements RecetaService {
 
     @Override
     public List<RecetaResumenResponse> buscarPorTipo(String tipo, String orden) {
-        Specification<Receta> spec = Specification.where(conTipoDescripcion(tipo));
+        Specification<Receta> spec = Specification
+        .where(conHabilitada())
+        .and(conTipoDescripcion(tipo));
         return recetaRepository.findAll(spec).stream()
                 .map(this::mapToResumen)
                 .sorted(getComparator(orden))
@@ -297,7 +302,9 @@ public class RecetaServiceImpl implements RecetaService {
 
     @Override
     public List<RecetaResumenResponse> buscarPorIngrediente(String nombre, String orden) {
-        Specification<Receta> spec = Specification.where(conIngrediente(nombre));
+        Specification<Receta> spec = Specification
+        .where(conHabilitada())
+        .and(conIngrediente(nombre));
         return recetaRepository.findAll(spec).stream()
                 .map(this::mapToResumen)
                 .sorted(getComparator(orden))
@@ -306,7 +313,9 @@ public class RecetaServiceImpl implements RecetaService {
 
     @Override
     public List<RecetaResumenResponse> buscarSinIngrediente(String nombre, String orden) {
-        Specification<Receta> spec = Specification.where(sinIngrediente(nombre));
+        Specification<Receta> spec = Specification
+        .where(conHabilitada())
+        .and(sinIngrediente(nombre));
         return recetaRepository.findAll(spec).stream()
                 .map(this::mapToResumen)
                 .sorted(getComparator(orden))
@@ -315,7 +324,9 @@ public class RecetaServiceImpl implements RecetaService {
 
     @Override
     public List<RecetaResumenResponse> buscarPorUsuario(String nombreUsuario, String orden) {
-        Specification<Receta> spec = Specification.where(conNombreUsuario(nombreUsuario));
+        Specification<Receta> spec = Specification
+        .where(conHabilitada())
+        .and(conNombreUsuario(nombreUsuario));
         return recetaRepository.findAll(spec).stream()
                 .map(this::mapToResumen)
                 .sorted(getComparator(orden))
@@ -324,7 +335,7 @@ public class RecetaServiceImpl implements RecetaService {
 
     @Override
 public List<RecetaResumenResponse> buscarPorFiltros(RecetaFiltroRequest filtro) {
-    Specification<Receta> spec = Specification.where(null);
+    Specification<Receta> spec = Specification.where(conHabilitada());
 
     if (filtro.getNombre() != null && !filtro.getNombre().isEmpty()) {
         spec = spec.and((root, query, cb) ->
@@ -396,10 +407,11 @@ public List<RecetaResumenResponse> buscarPorFiltros(RecetaFiltroRequest filtro) 
         r.setIdReceta(receta.getIdReceta());
         r.setNombre(receta.getNombreReceta());
         r.setFotoPrincipal(receta.getFotoPrincipal());
-        r.setCantidadPersonas(receta.getCantidadPersonas());
+        r.setPorciones(receta.getPorciones());
         r.setTipo(receta.getTipo().getDescripcion().name());
         r.setNombreUsuario(receta.getUsuario().getNombre());
         r.setFechaCreacion(receta.getFechaCreacion());
+        r.setDuracion(receta.getDuracion());
         double promedio = receta.getCalificaciones().stream()
                 .mapToInt(Calificacion::getCalificacion).average().orElse(0);
         r.setPromedioCalificacion(promedio);

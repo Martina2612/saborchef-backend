@@ -4,5 +4,11 @@ public enum Categoria {
     POSTRE,
     SALADO,
     VEGETARIANO,
-    ENSALADA
+    ENSALADA,
+    DESAYUNO,
+    ALMUERZO,
+    CENA,
+    SNACKS,
+    VEGANO,
+    PASTAS
 }

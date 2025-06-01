@@ -74,15 +74,7 @@ public ResponseEntity<String> registrarAsistencia(
 
 
 
-    @GetMapping("/cursos/{id}")
-    public ResponseEntity<CursoDisponibleDTO> obtenerCursoPorId(@PathVariable Long id) {
-        CursoDisponibleDTO dto = cursoService.obtenerCursoPorId(id);
-        if (dto != null) {
-            return ResponseEntity.ok(dto);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
+    
     
     @PostMapping("/cursos/{idCronograma}/{idAlumno}/inscripcion")
     public ResponseEntity<String> inscribirAlumno(

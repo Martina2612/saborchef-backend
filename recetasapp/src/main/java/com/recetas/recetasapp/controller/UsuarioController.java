@@ -7,7 +7,6 @@ import com.recetas.recetasapp.dto.ResetPasswordDto;
 import com.recetas.recetasapp.entity.Alumno;
 import com.recetas.recetasapp.entity.Usuario;
 import com.recetas.recetasapp.service.UsuarioService;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

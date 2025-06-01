@@ -2,11 +2,9 @@ package com.recetas.recetasapp.entity;
 
 import java.util.Collection;
 import java.util.Collections;
-
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -49,6 +47,10 @@ public class Usuario implements UserDetails{
     private Rol rol;
 
     private Boolean habilitado=true;
+
+    @Column
+    private String codigoConfirmacion;
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

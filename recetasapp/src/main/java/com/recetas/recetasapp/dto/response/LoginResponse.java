@@ -1,4 +1,4 @@
-package com.recetas.recetasapp.dto;
+package com.recetas.recetasapp.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -51,17 +51,25 @@ public class AuthenticationService {
             throw new AliasAlreadyExistsException("El alias ya está registrado.");
         }
 
+        String codigoGenerado = String.valueOf((int)(Math.random() * 9000) + 1000); // 4 dígitos
+
+
         var user = Usuario.builder()
-                .nombre(request.getNombre())
-                .apellido(request.getApellido())
-                .alias(request.getAlias())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .rol(request.getRole())
-                .habilitado(true)
-                .build();
+            .nombre(request.getNombre())
+            .apellido(request.getApellido())
+            .alias(request.getAlias())
+            .email(request.getEmail())
+            .password(passwordEncoder.encode(request.getPassword()))
+            .rol(request.getRole())
+            .habilitado(false)
+            .codigoConfirmacion(codigoGenerado)
+            .build();
 
         repository.save(user);
+
+        // Simular envío por mail (en producción usar MailService)
+        System.out.println("Código de confirmación enviado al correo: " + codigoGenerado);
+
         
         var jwtToken = jwtService.generateToken(user);
 
@@ -85,7 +93,12 @@ public class AuthenticationService {
     }
 
     var usuario = repository.findByAlias(request.getAlias())
-            .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con el alias: " + request.getAlias()));
+        .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con el alias: " + request.getAlias()));
+
+    if (!usuario.getHabilitado()) {
+        throw new InvalidCredentialsException("La cuenta no está habilitada. Por favor, confirma tu registro.");
+}
+
 
     var jwtToken = jwtService.generateToken(usuario);
 

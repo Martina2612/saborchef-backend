@@ -22,35 +22,39 @@ public class SecurityConfig {
     private final AuthenticationProvider authenticationProvider;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(req -> req
-                        // Endpoints públicos y de error
-                        .requestMatchers(
-                        "/v3/api-docs/**",
-                        "/swagger-ui/**",
-                        "/swagger-ui.html",
-                        "/swagger-resources/**",
-                        "/webjars/**","api/**","/api/auth/**","/api/recetas/**"
-                    ).permitAll()
-                        // .requestMatchers(HttpMethod.GET, "/books/**")
-                        // .hasAnyAuthority(Role.USER.name(), Role.ADMIN.name())
-                        // .requestMatchers(HttpMethod.GET,"/books/{id}").hasAnyAuthority(Role.USER.name())
-                        // .requestMatchers(HttpMethod.GET,"/books/genre/{genre}").hasAnyAuthority(Role.USER.name())
-                        // .requestMatchers(HttpMethod.GET,"/books/title/{title}").hasAnyAuthority(Role.USER.name())
-                        // .requestMatchers(HttpMethod.GET,"/books/author/{author}").hasAnyAuthority(Role.USER.name())
-                        // .requestMatchers(HttpMethod.GET,"/books/available").hasAnyAuthority(Role.USER.name())
-                        // .requestMatchers(HttpMethod.GET,"/books/ordered-by-price-asc").hasAnyAuthority(Role.USER.name())
-                        // .requestMatchers(HttpMethod.GET,"/books/ordered-by-price-desc").hasAnyAuthority(Role.USER.name())
-                        // .requestMatchers("/books/**").hasAnyAuthority(Role.ADMIN.name())
-                        .anyRequest()
-                        .authenticated())
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+        .csrf(AbstractHttpConfigurer::disable)
+        .authorizeHttpRequests(req -> req
+            // Públicos: login, registro, confirmar
+            .requestMatchers("/api/auth/**").permitAll()
+            .requestMatchers("/api/usuarios/**").permitAll()
 
-                .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
-                .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            // Visitantes pueden ver recetas, cursos (sin detalles)
+            .requestMatchers(HttpMethod.GET, "/api/recetas/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/cursos/**").permitAll()
 
-        return http.build();
-    }
+            // Usuarios (login requerido)
+            .requestMatchers(HttpMethod.POST, "/api/recetas/**").hasAnyAuthority("USUARIO", "ALUMNO", "ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/api/recetas/**").hasAnyAuthority("USUARIO", "ALUMNO", "ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/recetas/**").hasAnyAuthority("USUARIO", "ALUMNO", "ADMIN")
+
+            // Alumnos (funciones como inscribirse, ver estado de cuenta, asistir)
+            .requestMatchers("/api/inscripciones/**").hasAnyAuthority("ALUMNO", "ADMIN")
+            .requestMatchers("/api/asistencias/**").hasAnyAuthority("ALUMNO", "ADMIN")
+            .requestMatchers("/api/cursos/{id}/asistencia").hasAnyAuthority("ALUMNO", "ADMIN")
+
+            // Admin (gestionar todo)
+            .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+
+            // Todo lo demás requiere autenticación
+            .anyRequest().authenticated()
+        )
+        .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
+        .authenticationProvider(authenticationProvider)
+        .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+    return http.build();
+}
+
 }

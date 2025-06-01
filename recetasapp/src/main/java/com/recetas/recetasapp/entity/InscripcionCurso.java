@@ -1,9 +1,12 @@
 package com.recetas.recetasapp.entity;
 
+import java.sql.Date;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,16 +15,17 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Curso {
+public class InscripcionCurso {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idCurso;
-    private String nombre;	
-    private String descripcion;
-    private String contenidos;
-    private String requerimientos;
-    private String duracion;
-    private Double precio;
-    private String modalidad;
-}
+    private Long idInscripcion;
 
+    @ManyToOne
+    private Alumno alumno;
+
+    @ManyToOne
+    private CronogramaCurso cronograma;
+
+    private Date fechaInscripcion;
+}

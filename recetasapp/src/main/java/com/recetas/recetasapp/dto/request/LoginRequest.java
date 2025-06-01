@@ -1,4 +1,4 @@
-package com.recetas.recetasapp.dto;
+package com.recetas.recetasapp.dto.request;
 
 import lombok.Getter;
 import lombok.Setter;

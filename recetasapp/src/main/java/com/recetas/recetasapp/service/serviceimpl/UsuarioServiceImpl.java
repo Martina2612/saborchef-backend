@@ -91,7 +91,11 @@ public Usuario getUserById(Long id) {
 }
 
 
-
+@Override
+    public Usuario getUserByAlias(String alias) {
+        return usuarioRepository.findByAlias(alias)
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con alias: " + alias));
+    }
 
 
 }

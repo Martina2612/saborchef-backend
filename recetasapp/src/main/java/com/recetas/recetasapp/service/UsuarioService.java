@@ -13,6 +13,7 @@ public interface UsuarioService {
     String resetearContraseña(ResetPasswordDto datos);
     void confirmarCuentaConCodigo(ConfirmacionCodigoDTO dto);
     Usuario getUserById(Long id);
-
+    Usuario getUserByAlias(String alias);
+    
 }
 

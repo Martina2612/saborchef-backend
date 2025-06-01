@@ -26,6 +26,10 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
     http
         .csrf(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(req -> req
+            //Rutas para generar documentación Swagger
+            .requestMatchers("/v3/api-docs/**","/swagger-ui/**","/swagger-ui.html",
+                        "/swagger-resources/**","/webjars/**").permitAll()
+
             // Públicos: login, registro, confirmar
             .requestMatchers("/api/auth/**").permitAll()
             .requestMatchers("/api/usuarios/**").permitAll()

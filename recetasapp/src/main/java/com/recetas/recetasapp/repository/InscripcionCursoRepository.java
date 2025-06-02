@@ -18,7 +18,8 @@ import com.recetas.recetasapp.entity.InscripcionCurso;
 public interface InscripcionCursoRepository extends JpaRepository<InscripcionCurso, Long> {
     
     boolean existsByAlumnoAndCronograma(Alumno alumno, CronogramaCurso cronograma);
-    Optional<InscripcionCurso> findByAlumnoIdAndCronogramaId(Long alumnoId, Long cronogramaId);
-    List<InscripcionCurso> findByAlumnoId(Long alumnoId);
+    Optional<InscripcionCurso> findByAlumno_IdAlumnoAndCronograma_IdCronograma(Long alumnoId, Long cronogramaId);
+    List<InscripcionCurso> findByAlumno_IdAlumno(Long alumnoId);
+
 }
 

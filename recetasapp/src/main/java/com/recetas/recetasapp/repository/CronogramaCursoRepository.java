@@ -8,5 +8,6 @@ import com.recetas.recetasapp.entity.CronogramaCurso;
 
 public interface CronogramaCursoRepository extends JpaRepository<CronogramaCurso, Long> {
     List<CronogramaCurso> findByFechaInicioAfter(Date fechaActual);
-    List<CronogramaCurso> findByCursoId(Long idCurso);
+    List<CronogramaCurso> findByCurso_IdCurso(Long idCurso);
+
 }

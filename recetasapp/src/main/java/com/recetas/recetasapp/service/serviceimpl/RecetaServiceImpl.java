@@ -1,5 +1,14 @@
 package com.recetas.recetasapp.service.serviceimpl;
 
+import com.recetas.recetasapp.entity.Receta;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.List;
+
+
 import com.recetas.recetasapp.dto.request.RecetaCrearRequest;
 import com.recetas.recetasapp.dto.request.RecetaFiltroRequest;
 import com.recetas.recetasapp.dto.response.RecetaDetalleResponse;
@@ -43,12 +52,12 @@ public class RecetaServiceImpl implements RecetaService {
     private UnidadRepository unidadRepository;
 
     @Override
-    public List<RecetaDetalleResponse> obtenerUltimas3Recetas() {
-        List<Receta> recetas = recetaRepository.findTop3ByOrderByFechaCreacionDescLimit3();
-        return recetas.stream()
-                .map(this::mapToDetalle)
-                .toList();
-    }
+public List<RecetaDetalleResponse> obtenerUltimas3Recetas() {
+    List<Receta> recetas = recetaRepository.findTop3ByHabilitadaTrueOrderByFechaCreacionDesc();
+    return recetas.stream()
+            .map(this::mapToDetalle)
+            .toList();
+}
 
     @Override
     public List<RecetaResumenResponse> listarRecetas(Long u, Long t, String o) {

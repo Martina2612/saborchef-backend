@@ -25,34 +25,45 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserDetailsService userDetailsService;
 
     @Override
-protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
-        @NonNull FilterChain filterChain)
-        throws ServletException, IOException {
-            
-    final String authHeader = request.getHeader("Authorization");
-    final String jwt;
-    final String userIdentifier; // ANTES: userEmail
-    if (authHeader == null || !authHeader.startsWith("Bearer")) {
-        filterChain.doFilter(request, response);
-        return;
-    }
-    jwt = authHeader.substring(7);
-    userIdentifier = jwtService.extractUsername(jwt); // extraer el alias del token
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain)
+            throws ServletException, IOException {
 
-    if (userIdentifier != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-        UserDetails userDetails = this.userDetailsService.loadUserByUsername(userIdentifier);
-        if (jwtService.isTokenValid(jwt, userDetails)) {
-            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                    userDetails,
-                    null,
-                    userDetails.getAuthorities());
-            authToken.setDetails(
-                    new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authToken);
+        String path = request.getRequestURI();
+
+        // 🚫 Ignorar rutas públicas
+        if (path.startsWith("/api/auth") || path.startsWith("/api/usuarios/password")) {
+            filterChain.doFilter(request, response);
+            return;
         }
+
+        final String authHeader = request.getHeader("Authorization");
+        final String jwt;
+        final String userIdentifier; // alias o email
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        jwt = authHeader.substring(7);
+        userIdentifier = jwtService.extractUsername(jwt); // puede ser alias o email
+
+        if (userIdentifier != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userIdentifier);
+            if (jwtService.isTokenValid(jwt, userDetails)) {
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities()
+                );
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
+        }
+
+        filterChain.doFilter(request, response);
     }
-
-    filterChain.doFilter(request, response);
 }
 
-}

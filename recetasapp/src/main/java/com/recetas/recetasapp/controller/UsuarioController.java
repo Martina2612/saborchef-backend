@@ -1,13 +1,21 @@
 package com.recetas.recetasapp.controller;
 
 import com.recetas.recetasapp.dto.AlumnoActualizarDTO;
+import com.recetas.recetasapp.dto.CodigoVerificacionDto;
 import com.recetas.recetasapp.dto.ConfirmacionCodigoDTO;
+import com.recetas.recetasapp.dto.EmailDTO;
 import com.recetas.recetasapp.dto.RegistroConfirmarDTO;
 import com.recetas.recetasapp.dto.ResetPasswordDto;
+import com.recetas.recetasapp.dto.response.PasswordResetResponse;
+import com.recetas.recetasapp.dto.response.VerifyCodeResponse;
 import com.recetas.recetasapp.entity.Alumno;
 import com.recetas.recetasapp.entity.Usuario;
 import com.recetas.recetasapp.service.UsuarioService;
+
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,10 +40,13 @@ public class UsuarioController {
         return usuarioService.convertirEnAlumno(id, datos);
 }
 
- @PostMapping("/password/reset")
-public String resetearContraseña(@RequestBody ResetPasswordDto datos) {
-    return usuarioService.resetearContraseña(datos);
+@PostMapping("/password/reset")
+public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordDto datos) {
+    usuarioService.resetearContraseña(datos);
+    return ResponseEntity.ok(new PasswordResetResponse("Contraseña actualizada correctamente", true));
 }
+
+
 
 @PostMapping("/confirmar-codigo")
 public ResponseEntity<String> confirmarCuenta(@RequestBody ConfirmacionCodigoDTO dto) {
@@ -48,6 +59,44 @@ public ResponseEntity<String> confirmarCuenta(@RequestBody ConfirmacionCodigoDTO
 public Usuario getUsuarioById(@PathVariable(name = "id") Long id) {
     return usuarioService.getUserById(id);
 }
+
+@PostMapping("/password/send-code")
+public ResponseEntity<?> enviarCodigo(@RequestBody EmailDTO dto) {
+    String codigo = usuarioService.enviarCodigoRecuperacion(dto.getEmail());
+    return ResponseEntity.ok(new PasswordResetResponse("Código enviado correctamente", true));
+
+}
+
+
+@PostMapping("/password/verify-code")
+public ResponseEntity<VerifyCodeResponse> verificarCodigo(@RequestBody CodigoVerificacionDto dto) {
+    
+    
+    
+    try {
+        boolean valido = usuarioService.verificarCodigo(dto.getEmail(), dto.getCodigo());
+        System.out.println("✅ Resultado validación: " + valido);
+        
+        if (valido) {
+            System.out.println("🎉 Código VÁLIDO - devolviendo success");
+            return ResponseEntity.ok(new VerifyCodeResponse(true, "Código correcto"));
+        } else {
+            System.out.println("❌ Código INVÁLIDO - devolviendo error 400");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new VerifyCodeResponse(false, "El código ingresado es incorrecto o expiró"));
+        }
+        
+    } catch (Exception e) {
+        System.out.println("💥 Excepción en verificarCodigo: " + e.getMessage());
+        e.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new VerifyCodeResponse(false, "Error interno del servidor"));
+    }
+}
+
+
+
+
 
 
 

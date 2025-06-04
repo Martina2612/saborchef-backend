@@ -26,8 +26,15 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
     http
         .csrf(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(req -> req
+            // 🔥 PRIMERO: Endpoints de password recovery (MÁS ESPECÍFICOS)
+            .requestMatchers(HttpMethod.POST, "/api/usuarios/password/send-code").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/usuarios/password/verify-code").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/usuarios/password/reset").permitAll()
+            
             // Públicos: login, registro, confirmar
             .requestMatchers("/api/auth/**").permitAll()
+            
+            // 🔥 DESPUÉS: Regla más general de usuarios
             .requestMatchers("/api/usuarios/**").permitAll()
 
             // Visitantes pueden ver recetas, cursos (sin detalles)
@@ -56,5 +63,8 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
 
     return http.build();
 }
+
+
+
 
 }

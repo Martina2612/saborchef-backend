@@ -20,12 +20,13 @@ public class RecetaController {
     private RecetaService recetaService;
 
     @GetMapping
-    public ResponseEntity<List<RecetaResumenResponse>> listarRecetas(
-            @RequestParam(required = false) Long idUsuario,
-            @RequestParam(required = false) Long idTipo,
-            @RequestParam(required = false) String orden) {
-        return ResponseEntity.ok(recetaService.listarRecetas(idUsuario, idTipo, orden));
-    }
+public ResponseEntity<List<RecetaResumenResponse>> listarRecetas(
+        @RequestParam(name = "idUsuario", required = false) Long idUsuario,
+        @RequestParam(name = "idTipo", required = false) Long idTipo,
+        @RequestParam(name = "orden", required = false) String orden) {
+    return ResponseEntity.ok(recetaService.listarRecetas(idUsuario, idTipo, orden));
+}
+
 
     @PostMapping
     public ResponseEntity<Void> crearReceta(@RequestBody RecetaCrearRequest request) {

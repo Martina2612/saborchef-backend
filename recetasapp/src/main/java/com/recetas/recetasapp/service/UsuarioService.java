@@ -13,6 +13,7 @@ public interface UsuarioService {
     String resetearContraseña(ResetPasswordDto datos);
     void confirmarCuentaConCodigo(ConfirmacionCodigoDTO dto);
     Usuario getUserById(Long id);
-
+    public boolean verificarCodigo(String email, String codigo);
+    public String enviarCodigoRecuperacion(String email); 
 }
 

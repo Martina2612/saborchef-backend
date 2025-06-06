@@ -16,6 +16,7 @@ import com.recetas.recetasapp.repository.UsuarioRepository;
 import com.recetas.recetasapp.repository.AlumnoRepository;
 import com.recetas.recetasapp.service.UsuarioService;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -78,21 +79,29 @@ public Alumno convertirEnAlumno(Long idUsuario, AlumnoActualizarDTO datos) {
         return "Contraseña reseteada correctamente";
     }
 
-@Override
-@Transactional
-public void confirmarCuentaConCodigo(ConfirmacionCodigoDTO dto) {
-    Usuario usuario = usuarioRepository.findByEmail(dto.getEmail())
-        .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con el correo: " + dto.getEmail()));
-
-    if (usuario.getCodigoConfirmacion().equals(dto.getCodigo())) {
+    @Override
+    @Transactional
+    public void confirmarCuentaConCodigo(ConfirmacionCodigoDTO dto) {
+        Usuario usuario = usuarioRepository.findByEmail(dto.getEmail())
+            .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con el correo: " + dto.getEmail()));
+    
+        // Validar si el código coincide
+        if (!usuario.getCodigoConfirmacion().equals(dto.getCodigo())) {
+            usuario.setHabilitado(false); // seguridad
+            usuarioRepository.save(usuario);
+            throw new RuntimeException("Código de confirmación inválido");
+        }
+    
+        // Validar si el código expiró
+        if (usuario.getCodigoExpira() != null && usuario.getCodigoExpira().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("El código ha expirado. Solicite uno nuevo.");
+        }
+    
+        // Código correcto y no vencido → habilitar
         usuario.setHabilitado(true);
         usuarioRepository.save(usuario);
-    } else {
-        usuario.setHabilitado(false); // seguridad
-        usuarioRepository.save(usuario);
-        throw new RuntimeException("Código de confirmación inválido");
     }
-}
+    
 
 
 @Override
@@ -103,18 +112,18 @@ public Usuario getUserById(Long id) {
 
 public String enviarCodigoRecuperacion(String email) {
     Optional<Usuario> usuarioOpt = usuarioRepository.findByEmail(email);
-
     if (usuarioOpt.isEmpty()) {
         throw new RuntimeException("No existe un usuario con ese email.");
     }
 
     Usuario usuario = usuarioOpt.get();
 
-    String codigo = String.valueOf(new Random().nextInt(9000) + 1000); // código de 4 dígitos
-
-
-    // Guardamos el código en el usuario
+    String codigo = String.valueOf(new Random().nextInt(9000) + 1000);
     usuario.setCodigoConfirmacion(codigo);
+
+    
+    usuario.setCodigoExpira(LocalDateTime.now().plusHours(1));
+
     usuarioRepository.save(usuario);
 
     // Comentado el envío de mail por ahora
@@ -126,19 +135,42 @@ public String enviarCodigoRecuperacion(String email) {
     mailSender.send(mensaje);
     */
 
-    return codigo; // Para pruebas
+    return codigo; 
 }
 
 public boolean verificarCodigo(String email, String codigo) {
     Optional<Usuario> usuarioOpt = usuarioRepository.findByEmail(email);
-
-    if (usuarioOpt.isEmpty()) {
-        return false;
-    }
+    if (usuarioOpt.isEmpty()) return false;
 
     Usuario usuario = usuarioOpt.get();
+
+    
+    if (usuario.getCodigoExpira() == null || usuario.getCodigoExpira().isBefore(LocalDateTime.now())) {
+        return false; 
+    }
+
     return codigo.equals(usuario.getCodigoConfirmacion());
 }
+
+@Override
+public String reenviarCodigoConfirmacion(String email) {
+    Usuario usuario = usuarioRepository.findByEmail(email)
+        .orElseThrow(() -> new UserNotFoundException("No existe un usuario con ese email."));
+
+    
+    String nuevoCodigo = String.valueOf(new Random().nextInt(9000) + 1000);
+    usuario.setCodigoConfirmacion(nuevoCodigo);
+    usuario.setCodigoExpira(LocalDateTime.now().plusMinutes(60)); 
+    usuarioRepository.save(usuario);
+
+    
+    System.out.println("🔁 Nuevo código reenviado: " + nuevoCodigo + " para " + email);
+
+    return "Nuevo código enviado correctamente.";
+}
+
+
+
 
 
 

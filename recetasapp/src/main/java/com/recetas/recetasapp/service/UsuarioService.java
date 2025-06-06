@@ -14,6 +14,8 @@ public interface UsuarioService {
     void confirmarCuentaConCodigo(ConfirmacionCodigoDTO dto);
     Usuario getUserById(Long id);
     public boolean verificarCodigo(String email, String codigo);
-    public String enviarCodigoRecuperacion(String email); 
+    public String enviarCodigoRecuperacion(String email);
+    String reenviarCodigoConfirmacion(String email);
+ 
 }
 

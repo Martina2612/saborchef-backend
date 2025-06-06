@@ -94,6 +94,14 @@ public ResponseEntity<VerifyCodeResponse> verificarCodigo(@RequestBody CodigoVer
     }
 }
 
+@PostMapping("/codigo/reenviar")
+public ResponseEntity<String> reenviarCodigo(@RequestBody Map<String, String> body) {
+    String email = body.get("email");
+    String respuesta = usuarioService.reenviarCodigoConfirmacion(email);
+    return ResponseEntity.ok(respuesta);
+}
+
+
 
 
 

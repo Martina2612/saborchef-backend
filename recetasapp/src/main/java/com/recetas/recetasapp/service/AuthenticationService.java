@@ -1,5 +1,7 @@
 package com.recetas.recetasapp.service;
 
+import java.time.LocalDateTime;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -47,6 +49,7 @@ public class AuthenticationService {
             .rol(request.getRole())
             .habilitado(false)
             .codigoConfirmacion(codigoGenerado)
+            .codigoExpira(LocalDateTime.now().plusHours(1))
             .build();
 
         repository.save(user);

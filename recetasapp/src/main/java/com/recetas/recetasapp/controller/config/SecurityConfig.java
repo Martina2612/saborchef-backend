@@ -30,7 +30,7 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
             .requestMatchers(HttpMethod.POST, "/api/usuarios/password/send-code").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/usuarios/password/verify-code").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/usuarios/password/reset").permitAll()
-            
+            .requestMatchers(HttpMethod.POST, "/api/usuarios/codigo/reenviar").permitAll()
             // Públicos: login, registro, confirmar
             .requestMatchers("/api/auth/**").permitAll()
             
@@ -42,17 +42,17 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
             .requestMatchers(HttpMethod.GET, "/api/cursos/**").permitAll()
 
             // Usuarios (login requerido)
-            .requestMatchers(HttpMethod.POST, "/api/recetas/**").hasAnyAuthority("USUARIO", "ALUMNO", "ADMIN")
-            .requestMatchers(HttpMethod.PUT, "/api/recetas/**").hasAnyAuthority("USUARIO", "ALUMNO", "ADMIN")
-            .requestMatchers(HttpMethod.DELETE, "/api/recetas/**").hasAnyAuthority("USUARIO", "ALUMNO", "ADMIN")
+            .requestMatchers(HttpMethod.POST, "/api/recetas/**").hasAnyAuthority("ROLE_USUARIO", "ROLE_ALUMNO", "ROLE_ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/api/recetas/**").hasAnyAuthority("ROLE_USUARIO", "ROLE_ALUMNO", "ROLE_ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/recetas/**").hasAnyAuthority("ROLE_USUARIO", "ROLE_ALUMNO", "ROLE_ADMIN")
 
             // Alumnos (funciones como inscribirse, ver estado de cuenta, asistir)
-            .requestMatchers("/api/inscripciones/**").hasAnyAuthority("ALUMNO", "ADMIN")
-            .requestMatchers("/api/asistencias/**").hasAnyAuthority("ALUMNO", "ADMIN")
-            .requestMatchers("/api/cursos/{id}/asistencia").hasAnyAuthority("ALUMNO", "ADMIN")
+            .requestMatchers("/api/inscripciones/**").hasAnyAuthority("ROLE_USUARIO", "ROLE_ALUMNO", "ROLE_ADMIN")
+            .requestMatchers("/api/asistencias/**").hasAnyAuthority("ROLE_USUARIO", "ROLE_ALUMNO", "ROLE_ADMIN")
+            .requestMatchers("/api/cursos/{id}/asistencia").hasAnyAuthority("ROLE_USUARIO", "ROLE_ALUMNO", "ROLE_ADMIN")
 
             // Admin (gestionar todo)
-            .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+            .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
 
             // Todo lo demás requiere autenticación
             .anyRequest().authenticated()

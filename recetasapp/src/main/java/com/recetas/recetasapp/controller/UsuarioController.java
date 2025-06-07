@@ -4,20 +4,20 @@ import com.recetas.recetasapp.dto.AlumnoActualizarDTO;
 import com.recetas.recetasapp.dto.CodigoVerificacionDto;
 import com.recetas.recetasapp.dto.ConfirmacionCodigoDTO;
 import com.recetas.recetasapp.dto.EmailDTO;
-import com.recetas.recetasapp.dto.RegistroConfirmarDTO;
 import com.recetas.recetasapp.dto.ResetPasswordDto;
+import com.recetas.recetasapp.dto.request.RecoveryRequestDTO;
 import com.recetas.recetasapp.dto.response.PasswordResetResponse;
 import com.recetas.recetasapp.dto.response.VerifyCodeResponse;
 import com.recetas.recetasapp.entity.Alumno;
 import com.recetas.recetasapp.entity.Usuario;
 import com.recetas.recetasapp.service.UsuarioService;
 
-import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -61,11 +61,15 @@ public Usuario getUsuarioById(@PathVariable(name = "id") Long id) {
 }
 
 @PostMapping("/password/send-code")
-public ResponseEntity<?> enviarCodigo(@RequestBody EmailDTO dto) {
-    String codigo = usuarioService.enviarCodigoRecuperacion(dto.getEmail());
-    return ResponseEntity.ok(new PasswordResetResponse("Código enviado correctamente", true));
+    public ResponseEntity<PasswordResetResponse> enviarCodigo(
+            @RequestBody EmailDTO dto) {
+        RecoveryRequestDTO request = new RecoveryRequestDTO(dto.getEmail());
+        usuarioService.enviarCodigoRecuperacion(request);
 
-}
+        return ResponseEntity.ok(
+                new PasswordResetResponse("Código enviado correctamente", true)
+        );
+    }
 
 
 @PostMapping("/password/verify-code")

@@ -14,5 +14,7 @@ public interface RecetaRepository extends JpaRepository<Receta, Long>, JpaSpecif
     //Este va a servir para la screen de inicio que devuelve las 3 ultimas recetas subidas HABILITADAS
     List<Receta> findTop3ByHabilitadaTrueOrderByFechaCreacionDesc();
 
+    // Para últimas recetas publicadas (12 más recientes)
+    List<Receta> findTop12ByOrderByFechaCreacionDesc();
 
 }

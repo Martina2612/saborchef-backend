@@ -1,6 +1,5 @@
 package com.recetas.recetasapp.service.serviceimpl;
 
-import com.recetas.recetasapp.entity.Receta;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -8,31 +7,39 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-
+import com.recetas.recetasapp.dto.request.IngredienteCantidadDTO;
 import com.recetas.recetasapp.dto.request.RecetaCrearRequest;
 import com.recetas.recetasapp.dto.request.RecetaFiltroRequest;
 import com.recetas.recetasapp.dto.response.RecetaDetalleResponse;
+import com.recetas.recetasapp.dto.response.RecetaEscaladaResponse;
 import com.recetas.recetasapp.dto.response.RecetaResumenResponse;
 import com.recetas.recetasapp.entity.*;
 import com.recetas.recetasapp.exception.ResourceNotFoundException;
 import com.recetas.recetasapp.repository.IngredienteRepository;
+import com.recetas.recetasapp.repository.RecetaEditadaRepository;
 import com.recetas.recetasapp.repository.RecetaRepository;
 import com.recetas.recetasapp.repository.TipoRecetaRepository;
 import com.recetas.recetasapp.repository.UnidadRepository;
 import com.recetas.recetasapp.repository.UsuarioRepository;
+import com.recetas.recetasapp.repository.UtilizadoRepository;
 import com.recetas.recetasapp.service.RecetaService;
 import com.recetas.recetasapp.specification.RecetaSpecifications;
 
+import jakarta.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.recetas.recetasapp.specification.RecetaSpecifications.*;
@@ -50,6 +57,10 @@ public class RecetaServiceImpl implements RecetaService {
     private IngredienteRepository ingredienteRepository;
     @Autowired
     private UnidadRepository unidadRepository;
+    @Autowired
+    private UtilizadoRepository utilizadoRepository;
+    @Autowired
+    private RecetaEditadaRepository recetaGuardadaRepository;
 
     @Override
 public List<RecetaDetalleResponse> obtenerUltimas3Recetas() {
@@ -106,6 +117,7 @@ public List<RecetaDetalleResponse> obtenerUltimas3Recetas() {
         recetaNueva.setFotoPrincipal(req.getFotoPrincipal());
         recetaNueva.setCantidadPersonas(req.getCantidadPersonas());
         recetaNueva.setFechaCreacion(LocalDateTime.now());
+        recetaNueva.setDuracion(req.getDuracion());
 
         // Guardar la receta para que tenga ID (necesario para las relaciones)
         var recetaGuardada = recetaRepository.save(recetaNueva);
@@ -454,6 +466,204 @@ public List<RecetaDetalleResponse> obtenerUltimas3Recetas() {
                 .thenComparing(RecetaResumenResponse::getNombreUsuario);
             default -> Comparator.comparing(RecetaResumenResponse::getIdReceta);
         };
+    }
+
+    @Override
+    public List<RecetaDetalleResponse> obtenerUltimasRecetas() {
+        return recetaRepository
+        .findAll(
+            Specification.where(conHabilitada()),
+            PageRequest.of(0, 12, Sort.by("fechaCreacion").descending())
+        )
+        .stream()
+        .map(this::mapToDetalle)
+        .toList();
+    }
+
+    /**
+     * Factoriza la receta con un factor fijo (por ejemplo 0.5, 2.0, etc.).
+     */
+    @Override
+    @Transactional
+    public RecetaEscaladaResponse escalarRecetaPorFactor(Long idReceta, Double factor) throws Exception {
+        if (factor == null || factor <= 0) {
+            throw new IllegalArgumentException("El factor de escalado debe ser un número positivo.");
+        }
+        Optional<Receta> opt = recetaRepository.findById(idReceta);
+        if (opt.isEmpty()) {
+            throw new Exception("No se encontró la receta con id " + idReceta);
+        }
+        Receta receta = opt.get();
+        return generarRecetaEscalada(receta, factor);
+    }
+
+    /**
+     * Cálculo de factor a partir de porciones deseadas: porcDeseada / porcionesOriginal.
+     */
+    @Override
+    @Transactional
+    public RecetaEscaladaResponse escalarRecetaPorPorciones(Long idReceta, Integer porcionesDeseadas) throws Exception {
+        if (porcionesDeseadas == null || porcionesDeseadas <= 0) {
+            throw new IllegalArgumentException("Las porciones deseadas deben ser un entero positivo.");
+        }
+        Optional<Receta> opt = recetaRepository.findById(idReceta);
+        if (opt.isEmpty()) {
+            throw new Exception("No se encontró la receta con id " + idReceta);
+        }
+        Receta receta = opt.get();
+        Integer porcionesOriginal = receta.getPorciones();
+        if (porcionesOriginal == null || porcionesOriginal <= 0) {
+            throw new IllegalStateException("La receta original no tiene porciones válidas.");
+        }
+        Double factor = porcionesDeseadas.doubleValue() / porcionesOriginal.doubleValue();
+        return generarRecetaEscalada(receta, factor);
+    }
+
+    /**
+     * Cálculo de factor a partir de la cantidad de un ingrediente concreto:
+     * factor = nuevaCantidadIngresada / cantidadOriginalDelIngredienteElegido.
+     */
+    @Override
+    @Transactional
+    public RecetaEscaladaResponse escalarRecetaPorIngrediente(Long idReceta, Long ingredienteId, Double nuevaCantidad) throws Exception {
+        if (ingredienteId == null || nuevaCantidad == null || nuevaCantidad <= 0) {
+            throw new IllegalArgumentException("Debe indicar un ingrediente y una cantidad positiva.");
+        }
+        Optional<Receta> opt = recetaRepository.findById(idReceta);
+        if (opt.isEmpty()) {
+            throw new Exception("No se encontró la receta con id " + idReceta);
+        }
+        Receta receta = opt.get();
+
+        // Buscamos el Utilizado que corresponda al ingredienteId
+        List<Utilizado> listaUtilizados = utilizadoRepository.findAllByRecetaIdReceta(idReceta);
+        Optional<Utilizado> utilOpt = listaUtilizados.stream()
+                .filter(u -> u.getIngrediente().getIdIngrediente().equals(ingredienteId))
+                .findFirst();
+
+        if (utilOpt.isEmpty()) {
+            throw new Exception("El ingrediente con id " + ingredienteId + " no está en la receta " + idReceta);
+        }
+        Utilizado uOrigen = utilOpt.get();
+        Double cantidadOriginal = uOrigen.getCantidad();
+        if (cantidadOriginal == null || cantidadOriginal <= 0) {
+            throw new IllegalStateException("Cantidad original del ingrediente inválida.");
+        }
+
+        Double factor = nuevaCantidad / cantidadOriginal;
+        return generarRecetaEscalada(receta, factor);
+    }
+
+    /**
+     * Genera el DTO RecetaEscaladaResponse a partir de la entidad Receta y un factor dado.
+     */
+    private RecetaEscaladaResponse generarRecetaEscalada(Receta receta, Double factor) {
+        // 1) Calcular nueva cantidad de porciones
+        Integer porcionesOriginal = receta.getPorciones();
+        Integer porcionesEscaladas = (porcionesOriginal != null)
+                ? (int) Math.round(porcionesOriginal * factor)
+                : null;
+
+        // 2) Obtener todos los utilizados y multiplicar cantidades
+        List<Utilizado> listaUtilizados = utilizadoRepository.findAllByRecetaIdReceta(receta.getIdReceta());
+
+        List<IngredienteCantidadDTO> ingredientesDTO = listaUtilizados.stream().map(u -> {
+            Ingrediente ingr = u.getIngrediente();
+            Unidad unidad = u.getUnidad();
+
+            Double cantidadOriginal = u.getCantidad();
+            Double cantidadEscalada = null;
+            if (cantidadOriginal != null) {
+                cantidadEscalada = cantidadOriginal * factor;
+            }
+            return new IngredienteCantidadDTO(
+                    ingr.getIdIngrediente(),
+                    ingr.getNombre(),
+                    cantidadEscalada,
+                    (unidad != null ? unidad.getDescripcion() : ""),
+                    u.getObservaciones()
+            );
+        }).collect(Collectors.toList());
+
+        // 3) Armar el DTO final
+        RecetaEscaladaResponse resp = new RecetaEscaladaResponse();
+        resp.setIdRecetaOriginal(receta.getIdReceta());
+        resp.setNombreReceta(receta.getNombreReceta());
+        resp.setNombreUsuario(receta.getUsuario().getNombre()); 
+        resp.setTipoReceta(receta.getTipo().getDescripcion().name()); 
+        resp.setDescripcionReceta(receta.getDescripcionReceta());
+        resp.setPorcionesOriginal(porcionesOriginal);
+        resp.setPorcionesEscaladas(porcionesEscaladas);
+        resp.setFactorEscalado(factor);
+        resp.setIngredientes(ingredientesDTO);
+
+        return resp;
+    }
+
+    // ______________________________________________
+    // 3) LÓGICA DE GUARDADO DE RECETAS ESCALADAS (HASTA 10 POR USUARIO)
+    // ______________________________________________
+
+    @Override
+    @Transactional
+    public void guardarRecetaEscalada(Long idReceta, Usuario usuario, Double factor) throws Exception {
+        if (usuario == null) {
+            throw new IllegalArgumentException("Se debe indicar el usuario que guarda la receta.");
+        }
+        Optional<Receta> optReceta = recetaRepository.findById(idReceta);
+        if (optReceta.isEmpty()) {
+            throw new Exception("No se encontró la receta con id " + idReceta);
+        }
+
+        // 1) Verificar cuántas recetas guardadas tiene el usuario
+        Long contador = recetaGuardadaRepository.countByUsuario(usuario);
+        if (contador >= 10) {
+            throw new Exception("Ya alcanzaste el límite de 10 recetas guardadas. Borra alguna antes de guardar otra.");
+        }
+
+        // 2) Construir la entidad RecetaGuardada y persistir
+        RecetaEditada guardada = new RecetaEditada();
+        guardada.setUsuario(usuario);
+        guardada.setRecetaOriginal(optReceta.get());
+        guardada.setFactorEscalado(factor);
+        guardada.setFechaGuardado(LocalDateTime.now());
+
+        recetaGuardadaRepository.save(guardada);
+    }
+
+    @Override
+    @Transactional
+    public List<RecetaEscaladaResponse> listarRecetasEscaladasGuardadas(Usuario usuario) {
+        if (usuario == null) {
+            return Collections.emptyList();
+        }
+        List<RecetaEditada> lista = recetaGuardadaRepository.findAllByUsuario(usuario);
+        // Por cada guardada, recupero datos y genero el DTO (con el factor almacenado).
+        return lista.stream()
+                .map(rg -> {
+                    Receta r = rg.getRecetaOriginal();
+                    Double factor = rg.getFactorEscalado();
+                    // Reuso la función para generar la receta escalada:
+                    return generarRecetaEscalada(r, factor);
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void eliminarRecetaGuardada(Long idRecetaGuardada, Usuario usuario) throws Exception {
+        if (usuario == null) {
+            throw new IllegalArgumentException("Usuario no válido.");
+        }
+        Optional<RecetaEditada> opt = recetaGuardadaRepository.findById(idRecetaGuardada);
+        if (opt.isEmpty()) {
+            throw new Exception("No se encontró la receta guardada con id " + idRecetaGuardada);
+        }
+        RecetaEditada rg = opt.get();
+        if (!rg.getUsuario().getId().equals(usuario.getId())) {
+            throw new Exception("No tienes permiso para eliminar esta receta guardada.");
+        }
+        recetaGuardadaRepository.delete(rg);
     }
 
 }

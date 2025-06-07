@@ -37,24 +37,24 @@ public class RecetaSpecifications {
     }
 
      public static Specification<Receta> sinIngrediente(String nombreIngrediente) {
-    return (root, query, cb) -> {
-        // Creamos un subquery sobre Utilizado
-        Subquery<Utilizado> sub = query.subquery(Utilizado.class);
-        Root<Utilizado> u = sub.from(Utilizado.class);
-        Join<Utilizado, Ingrediente> ing = u.join("ingrediente");
+        return (root, query, cb) -> {
+            // Creamos un subquery sobre Utilizado
+            Subquery<Utilizado> sub = query.subquery(Utilizado.class);
+            Root<Utilizado> u = sub.from(Utilizado.class);
+            Join<Utilizado, Ingrediente> ing = u.join("ingrediente");
 
-        // Seleccionamos cualquier utilizado donde:
-        // 1) u.receta = root (correlación)
-        // 2) el nombre del ingrediente coincide
-        sub.select(u)
-           .where(
-               cb.equal(u.get("receta"), root),
-               cb.like(cb.lower(ing.get("nombre")),
-                       "%" + nombreIngrediente.toLowerCase(Locale.ROOT) + "%")
-           );
+            // Seleccionamos cualquier utilizado donde:
+            // 1) u.receta = root (correlación)
+            // 2) el nombre del ingrediente coincide
+            sub.select(u)
+            .where(
+                cb.equal(u.get("receta"), root),
+                cb.like(cb.lower(ing.get("nombre")),
+                        "%" + nombreIngrediente.toLowerCase(Locale.ROOT) + "%")
+            );
 
-        // Devolvemos recipes donde NO existe ese utilizado
-        return cb.not(cb.exists(sub));
+            // Devolvemos recipes donde NO existe ese utilizado
+            return cb.not(cb.exists(sub));
     };
 }
 
@@ -73,4 +73,7 @@ public class RecetaSpecifications {
             "%" + nombreUsuario.toLowerCase() + "%"
         );
 }
+    public static Specification<Receta> conHabilitada() {
+            return (root, query, cb) -> cb.isTrue(root.get("habilitada"));
+        }
 }

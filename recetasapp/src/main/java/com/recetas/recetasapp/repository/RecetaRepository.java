@@ -12,7 +12,9 @@ public interface RecetaRepository extends JpaRepository<Receta, Long>, JpaSpecif
     List<Receta> findByUsuarioId(Long idUsuario);
 
     //Este va a servir para la screen de inicio que devuelve las 3 ultimas recetas subidas HABILITADAS
-    @Query("SELECT r FROM Receta r WHERE r.habilitada = false ORDER BY r.fechaCreacion DESC")
-    List<Receta> findTop3ByOrderByFechaCreacionDescLimit3();
+    List<Receta> findTop3ByHabilitadaTrueOrderByFechaCreacionDesc();
+
+    // Para últimas recetas publicadas (12 más recientes)
+    List<Receta> findTop12ByOrderByFechaCreacionDesc();
 
 }

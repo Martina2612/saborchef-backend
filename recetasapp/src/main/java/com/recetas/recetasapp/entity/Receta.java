@@ -37,8 +37,10 @@ public class Receta {
     @Column(length = 1000)
     private String descripcionReceta;
 
+    
     private String fotoPrincipal;
-    private String porciones;
+    private Integer porciones;
+    private Integer duracion;
     private Integer cantidadPersonas;
 
     @ManyToOne

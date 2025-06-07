@@ -1,5 +1,8 @@
 package com.recetas.recetasapp.service;
 
+import java.time.LocalDateTime;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -26,6 +29,8 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    @Autowired
+    private EmailService emailService; // asegurate de tener esta línea en tu clase
 
     public AuthenticationResponse register(RegisterRequest request) {
         if (repository.existsByEmail(request.getEmail())) {
@@ -34,10 +39,9 @@ public class AuthenticationService {
         if (repository.existsByAlias(request.getAlias())) {
             throw new AliasAlreadyExistsException("El alias ya está registrado.");
         }
-
+    
         String codigoGenerado = String.valueOf((int)(Math.random() * 9000) + 1000); // 4 dígitos
-
-
+    
         var user = Usuario.builder()
             .nombre(request.getNombre())
             .apellido(request.getApellido())
@@ -47,16 +51,21 @@ public class AuthenticationService {
             .rol(request.getRole())
             .habilitado(false)
             .codigoConfirmacion(codigoGenerado)
+            .codigoExpira(LocalDateTime.now().plusHours(1))
             .build();
-
+    
         repository.save(user);
-
-        // Simular envío por mail (en producción usar MailService)
-        System.out.println("Código de confirmación enviado al correo: " + codigoGenerado);
-
+    
         
+        String asunto = "Confirmación de cuenta";
+        String texto = "Hola " + user.getNombre() + ",\n\n"
+            + "Tu código de confirmación es: " + codigoGenerado + "\n"
+            + "Este código es válido por 1 hora.\n\n"
+            + "¡Gracias por registrarte en SaborChef!";
+        emailService.enviarEmail(user.getEmail(), asunto, texto);
+    
         var jwtToken = jwtService.generateToken(user);
-
+    
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
                 .userId(user.getId())
@@ -64,6 +73,7 @@ public class AuthenticationService {
                 .email(user.getEmail())
                 .build();
     }
+    
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
     try {

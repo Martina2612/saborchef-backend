@@ -1,5 +1,6 @@
 package com.recetas.recetasapp.entity;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import org.springframework.security.core.GrantedAuthority;
@@ -50,6 +51,10 @@ public class Usuario implements UserDetails{
 
     @Column
     private String codigoConfirmacion;
+
+    @Column
+    private LocalDateTime codigoExpira;
+
 
 
     @Override

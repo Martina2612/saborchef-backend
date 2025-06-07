@@ -26,15 +26,20 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
     http
         .csrf(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(req -> req
-            // 🔥 PRIMERO: Endpoints de password recovery (MÁS ESPECÍFICOS)
+            
+            //Endpoint para documentación de Swagger    
+            .requestMatchers("/v3/api-docs/**","/v3/api-docs/swagger-config", "/swagger-ui/**","/swagger-ui.html","/swagger-resources/**","/webjars/**").permitAll()
+            // Públicos: login, registro, confirmar
+            .requestMatchers("/api/auth/**").permitAll()
+
+            //  PRIMERO: Endpoints de password recovery (MÁS ESPECÍFICOS)
             .requestMatchers(HttpMethod.POST, "/api/usuarios/password/send-code").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/usuarios/password/verify-code").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/usuarios/password/reset").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/usuarios/codigo/reenviar").permitAll()
             
-            // Públicos: login, registro, confirmar
-            .requestMatchers("/api/auth/**").permitAll()
             
-            // 🔥 DESPUÉS: Regla más general de usuarios
+            // Regla más general de usuarios
             .requestMatchers("/api/usuarios/**").permitAll()
 
             // Visitantes pueden ver recetas, cursos (sin detalles)
@@ -42,17 +47,24 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
             .requestMatchers(HttpMethod.GET, "/api/cursos/**").permitAll()
 
             // Usuarios (login requerido)
-            .requestMatchers(HttpMethod.POST, "/api/recetas/**").hasAnyAuthority("USUARIO", "ALUMNO", "ADMIN")
-            .requestMatchers(HttpMethod.PUT, "/api/recetas/**").hasAnyAuthority("USUARIO", "ALUMNO", "ADMIN")
-            .requestMatchers(HttpMethod.DELETE, "/api/recetas/**").hasAnyAuthority("USUARIO", "ALUMNO", "ADMIN")
+            .requestMatchers(HttpMethod.POST, "/api/recetas/**").hasAnyAuthority("ROLE_USUARIO", "ROLE_ALUMNO", "ROLE_ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/api/recetas/**").hasAnyAuthority("ROLE_USUARIO", "ROLE_ALUMNO", "ROLE_ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/recetas/**").hasAnyAuthority("ROLE_USUARIO", "ROLE_ALUMNO", "ROLE_ADMIN")
 
             // Alumnos (funciones como inscribirse, ver estado de cuenta, asistir)
-            .requestMatchers("/api/inscripciones/**").hasAnyAuthority("ALUMNO", "ADMIN")
-            .requestMatchers("/api/asistencias/**").hasAnyAuthority("ALUMNO", "ADMIN")
-            .requestMatchers("/api/cursos/{id}/asistencia").hasAnyAuthority("ALUMNO", "ADMIN")
+            .requestMatchers("/api/inscripciones/**").hasAnyAuthority("ROLE_USUARIO", "ROLE_ALUMNO", "ROLE_ADMIN")
+            .requestMatchers("/api/asistencias/**").hasAnyAuthority("ROLE_USUARIO", "ROLE_ALUMNO", "ROLE_ADMIN")
+            .requestMatchers("/api/cursos/{id}/asistencia").hasAnyAuthority("ROLE_USUARIO", "ROLE_ALUMNO", "ROLE_ADMIN")
+
+            //Calificaciones y comentarios (solo alumnos y usuarios)
+            .requestMatchers(HttpMethod.POST, "/api/calificaciones/**").hasAnyAuthority("ROLE_USUARIO", "ROLE_ALUMNO", "ROLE_ADMIN")
+            .requestMatchers(HttpMethod.GET, "/api/calificaciones/**").permitAll()
+
+            //Endpoinsts de recetas favoritas (solo usuarios y alumnos)
+            .requestMatchers("/api/favoritas/**").hasAnyAuthority("ROLE_USUARIO", "ROLE_ALUMNO", "ROLE_ADMIN")
 
             // Admin (gestionar todo)
-            .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+            .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
 
             // Todo lo demás requiere autenticación
             .anyRequest().authenticated()

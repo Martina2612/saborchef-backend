@@ -1,5 +1,6 @@
 package com.recetas.recetasapp.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -9,22 +10,19 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
+    @Autowired
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
 
-    /**
-     * Envía un mail simple con un asunto y texto al destinatario.
-     * 
-     * @param destinatario la dirección de email
-     * @param asunto        el asunto del correo
-     * @param texto         el cuerpo del correo
-     */
-    public void enviarEmail(String destinatario, String asunto, String texto) {
+    public void enviarEmail(String to, String subject, String text) {
         SimpleMailMessage mensaje = new SimpleMailMessage();
-        mensaje.setTo(destinatario);
-        mensaje.setSubject(asunto);
-        mensaje.setText(texto);
+        mensaje.setTo(to);
+        mensaje.setSubject(subject);
+        mensaje.setText(text);
+
         mailSender.send(mensaje);
+        System.out.println("📤 Email enviado a " + to);
     }
 }
+

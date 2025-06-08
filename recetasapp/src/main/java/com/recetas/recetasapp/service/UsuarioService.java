@@ -17,6 +17,7 @@ public interface UsuarioService {
     boolean verificarCodigo(String email, String codigo);
     void enviarCodigoRecuperacion(RecoveryRequestDTO request);
     String reenviarCodigoConfirmacion(String email);
- 
+    boolean aliasExists(String alias);/** Devuelve true si ya hay un usuario con este alias */
+    boolean emailExists(String email);/** Devuelve true si ya hay un usuario con este email */
 }
 

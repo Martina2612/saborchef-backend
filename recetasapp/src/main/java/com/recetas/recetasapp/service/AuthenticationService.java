@@ -13,11 +13,14 @@ import com.recetas.recetasapp.controller.auth.AuthenticationRequest;
 import com.recetas.recetasapp.controller.auth.AuthenticationResponse;
 import com.recetas.recetasapp.controller.auth.RegisterRequest;
 import com.recetas.recetasapp.controller.config.JwtService;
+import com.recetas.recetasapp.entity.Alumno;
+import com.recetas.recetasapp.entity.Rol;
 import com.recetas.recetasapp.entity.Usuario;
 import com.recetas.recetasapp.exception.auth.AliasAlreadyExistsException;
 import com.recetas.recetasapp.exception.auth.EmailAlreadyExistsException;
 import com.recetas.recetasapp.exception.auth.InvalidCredentialsException;
 import com.recetas.recetasapp.exception.auth.UserNotFoundException;
+import com.recetas.recetasapp.repository.AlumnoRepository;
 import com.recetas.recetasapp.repository.UsuarioRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -26,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthenticationService {
     private final UsuarioRepository repository;
+    private final AlumnoRepository alumnoRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
@@ -40,30 +44,47 @@ public class AuthenticationService {
             throw new AliasAlreadyExistsException("El alias ya está registrado.");
         }
     
-        String codigoGenerado = String.valueOf((int)(Math.random() * 9000) + 1000); // 4 dígitos
+        String codigoGenerado = String.valueOf((int) (Math.random() * 9000) + 1000); // 4 dígitos
     
+        // Crear usuario
         var user = Usuario.builder()
-            .nombre(request.getNombre())
-            .apellido(request.getApellido())
-            .alias(request.getAlias())
-            .email(request.getEmail())
-            .password(passwordEncoder.encode(request.getPassword()))
-            .rol(request.getRole())
-            .habilitado(false)
-            .codigoConfirmacion(codigoGenerado)
-            .codigoExpira(LocalDateTime.now().plusHours(1))
-            .build();
+                .nombre(request.getNombre())
+                .apellido(request.getApellido())
+                .alias(request.getAlias())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .rol(request.getRole())
+                .habilitado(false)
+                .codigoConfirmacion(codigoGenerado)
+                .codigoExpira(LocalDateTime.now().plusHours(1))
+                .build();
     
         repository.save(user);
     
-        
+        // Si es ALUMNO, crear también la entidad Alumno
+        if (request.getRole() == Rol.ALUMNO) {
+            Alumno alumno = Alumno.builder()
+                    .usuario(user)
+                    .numeroTarjeta(request.getNumeroTarjeta())
+                    .tipoTarjeta(request.getTipoTarjeta())
+                    .vencimiento(request.getVencimiento())
+                    .codigoSeguridad(request.getCodigoSeguridad())
+                    .dniFrente(request.getDniFrente())
+                    .dniDorso(request.getDniDorso())
+                    .numeroTramite(request.getNumeroTramite())
+                    .build();
+            alumnoRepository.save(alumno); // Asegurate de tener inyectado el repo
+        }
+    
+        // Enviar código por email
         String asunto = "Confirmación de cuenta";
         String texto = "Hola " + user.getNombre() + ",\n\n"
-            + "Tu código de confirmación es: " + codigoGenerado + "\n"
-            + "Este código es válido por 1 hora.\n\n"
-            + "¡Gracias por registrarte en SaborChef!";
+                + "Tu código de confirmación es: " + codigoGenerado + "\n"
+                + "Este código es válido por 1 hora.\n\n"
+                + "¡Gracias por registrarte en SaborChef!";
         emailService.enviarEmail(user.getEmail(), asunto, texto);
     
+        
         var jwtToken = jwtService.generateToken(user);
     
         return AuthenticationResponse.builder()
@@ -73,6 +94,8 @@ public class AuthenticationService {
                 .email(user.getEmail())
                 .build();
     }
+    
+    
     
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {

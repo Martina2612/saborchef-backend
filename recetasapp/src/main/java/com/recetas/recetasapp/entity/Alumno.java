@@ -38,11 +38,14 @@ public class Alumno {
     private String codigoSeguridad;    // CVV
 
     // Datos de DNI
-    @Column(name = "dni_frente", length = 255)
-    private String dniFrente;          // ruta o base64
+    @Lob
+    @Column(name = "dni_frente", columnDefinition = "LONGTEXT")
+    private String dniFrente;
 
-    @Column(name = "dni_dorso", length = 255)
+    @Lob
+    @Column(name = "dni_dorso", columnDefinition = "LONGTEXT")
     private String dniDorso;
+
 
     @Column(name = "numero_tramite", length = 50)
     private String numeroTramite;      // número de trámite

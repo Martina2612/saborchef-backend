@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.recetas.recetasapp.dto.CursoDisponibleDTO;
 import com.recetas.recetasapp.entity.CronogramaCurso;
+import com.recetas.recetasapp.entity.Curso;
 import com.recetas.recetasapp.repository.CronogramaCursoRepository;
 import com.recetas.recetasapp.service.CursoService;
 
@@ -25,39 +26,49 @@ public class CursoServiceImpl implements CursoService {
         List<CronogramaCurso> cronogramas = cronogramaCursoRepository.findByFechaInicioAfter(hoy);
 
         return cronogramas.stream()
-            .map(c -> new CursoDisponibleDTO(
-                c.getIdCronograma(),
-                c.getSede().getNombreSede(),
-                c.getSede().getDireccionSede(),
-                c.getCurso().getDescripcion(),
-                c.getCurso().getDuracion(),
-                c.getCurso().getPrecio(),
-                c.getFechaInicio(),
-                c.getFechaFin(),
-                c.getVacantesDisponibles()
-            ))
-            .collect(Collectors.toList());
+    .map(c -> {
+        Curso curso = c.getCurso();
+        return new CursoDisponibleDTO(
+            curso.getIdCurso(),
+            curso.getNombre(),
+            curso.getDescripcion(),
+            curso.getContenidos(),
+            curso.getRequerimientos(),
+            curso.getDuracion(),
+            curso.getPrecio(),
+            curso.getModalidad(),
+            curso.getImagenUrl(),
+            curso.getNivel().name(), // enum a String
+            curso.getChef()
+        );
+    })
+    .collect(Collectors.toList());
     }
 
     @Override
-    public CursoDisponibleDTO obtenerCursoPorId(Long id) {
-        Optional<CronogramaCurso> optional = cronogramaCursoRepository.findById(id);
+public CursoDisponibleDTO obtenerCursoPorId(Long id) {
+    Optional<CronogramaCurso> optional = cronogramaCursoRepository.findById(id);
 
-        if (optional.isPresent()) {
-            CronogramaCurso c = optional.get();
-            return new CursoDisponibleDTO(
-                c.getIdCronograma(),
-                c.getSede().getNombreSede(),
-                c.getSede().getDireccionSede(),
-                c.getCurso().getDescripcion(),
-                c.getCurso().getDuracion(),
-                c.getCurso().getPrecio(),
-                c.getFechaInicio(),
-                c.getFechaFin(),
-                c.getVacantesDisponibles()
-            );
-        } else {
-            return null;
-        }
+    if (optional.isPresent()) {
+        CronogramaCurso cronograma = optional.get();
+        Curso curso = cronograma.getCurso();
+
+        return new CursoDisponibleDTO(
+            curso.getIdCurso(),
+            curso.getNombre(),
+            curso.getDescripcion(),
+            curso.getContenidos(),
+            curso.getRequerimientos(),
+            curso.getDuracion(),
+            curso.getPrecio(),
+            curso.getModalidad(),
+            curso.getImagenUrl(),
+            curso.getNivel().name(), // convert enum to String
+            curso.getChef()
+        );
+    } else {
+        return null;
     }
+}
+
 }

@@ -7,13 +7,15 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class CursoDisponibleDTO {
-    private Long idCronograma;
-    private String nombreSede;
-    private String direccionSede;
-    private String descripcionCurso;
+    private Long idCurso;
+    private String nombre;
+    private String descripcion;
+    private String contenidos;
+    private String requerimientos;
     private String duracion;
     private Double precio;
-    private Date fechaInicio;
-    private Date fechaFin;
-    private Integer vacantesDisponibles;
+    private String modalidad;
+    private String imagenUrl;
+    private String nivel;
+    private String chef;
 }

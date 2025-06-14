@@ -1,6 +1,8 @@
 package com.recetas.recetasapp.entity;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -23,5 +25,10 @@ public class Curso {
     private String duracion;
     private Double precio;
     private String modalidad;
+    private String imagenUrl;
+    @Enumerated(EnumType.STRING)
+    private Nivel nivel;
+    private String chef;
+
 }
 

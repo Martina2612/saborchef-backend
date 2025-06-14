@@ -95,10 +95,11 @@ public class UsuarioController {
      * Devuelve { "exists": true/false }
      */
     @GetMapping("/alias-exists/{alias}")
-    public ResponseEntity<Map<String, Boolean>> aliasExists(@PathVariable String alias) {
+    public ResponseEntity<Map<String, Boolean>> aliasExists(@PathVariable("alias") String alias) {
         boolean exists = usuarioService.aliasExists(alias);
         return ResponseEntity.ok(Map.of("exists", exists));
-    }
+}
+
 
     /**
      * Comprueba si un email ya está registrado.

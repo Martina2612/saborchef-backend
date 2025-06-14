@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 import com.recetas.recetasapp.dto.CursoDisponibleDTO;
+import com.recetas.recetasapp.entity.Curso;
 import com.recetas.recetasapp.service.CursoService;
 import com.recetas.recetasapp.service.InscripcionCursoService;
 import com.recetas.recetasapp.repository.CronogramaCursoRepository;
@@ -46,21 +47,25 @@ public class CursoController {
 public ResponseEntity<CursoDisponibleDTO> obtenerCursoPorId(@PathVariable Long id) {
     return cronogramaCursoRepository.findById(id)
         .map(c -> {
+            Curso curso = c.getCurso();
             CursoDisponibleDTO dto = new CursoDisponibleDTO(
-                c.getIdCronograma(),
-                c.getSede().getNombreSede(),
-                c.getSede().getDireccionSede(),
-                c.getCurso().getDescripcion(),
-                c.getCurso().getDuracion(),
-                c.getCurso().getPrecio(),
-                c.getFechaInicio(),
-                c.getFechaFin(),
-                c.getVacantesDisponibles()
+                curso.getIdCurso(),
+                curso.getNombre(),
+                curso.getDescripcion(),
+                curso.getContenidos(),
+                curso.getRequerimientos(),
+                curso.getDuracion(),
+                curso.getPrecio(),
+                curso.getModalidad(),
+                curso.getImagenUrl(),
+                curso.getNivel().name(), // enum a String
+                curso.getChef()
             );
             return ResponseEntity.ok(dto);
         })
         .orElse(ResponseEntity.notFound().build());
 }
+
 
 @PostMapping("/{id}/asistencia")
 public ResponseEntity<String> registrarAsistencia(

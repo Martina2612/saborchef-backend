@@ -1,11 +1,17 @@
 package com.recetas.recetasapp.entity;
 
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -29,6 +35,10 @@ public class Curso {
     @Enumerated(EnumType.STRING)
     private Nivel nivel;
     private String chef;
+    @OneToMany(mappedBy = "curso", cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private List<CronogramaCurso> cronogramas;
+
 
 }
 

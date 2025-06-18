@@ -1,6 +1,7 @@
 package com.recetas.recetasapp.controller;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -14,8 +15,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import org.springframework.web.bind.annotation.*;
 
-
+import com.recetas.recetasapp.dto.CronogramaDTO;
 import com.recetas.recetasapp.dto.CursoDisponibleDTO;
+import com.recetas.recetasapp.dto.SedeDTO;
+import com.recetas.recetasapp.entity.CronogramaCurso;
 import com.recetas.recetasapp.entity.Curso;
 import com.recetas.recetasapp.service.CursoService;
 import com.recetas.recetasapp.service.InscripcionCursoService;
@@ -44,27 +47,15 @@ public class CursoController {
     }
 
     @GetMapping("/{id}")
-public ResponseEntity<CursoDisponibleDTO> obtenerCursoPorId(@PathVariable Long id) {
-    return cronogramaCursoRepository.findById(id)
-        .map(c -> {
-            Curso curso = c.getCurso();
-            CursoDisponibleDTO dto = new CursoDisponibleDTO(
-                curso.getIdCurso(),
-                curso.getNombre(),
-                curso.getDescripcion(),
-                curso.getContenidos(),
-                curso.getRequerimientos(),
-                curso.getDuracion(),
-                curso.getPrecio(),
-                curso.getModalidad(),
-                curso.getImagenUrl(),
-                curso.getNivel().name(), // enum a String
-                curso.getChef()
-            );
-            return ResponseEntity.ok(dto);
-        })
-        .orElse(ResponseEntity.notFound().build());
+public ResponseEntity<CursoDisponibleDTO> obtenerCursoPorId(@PathVariable("id") Long id) {
+    CursoDisponibleDTO dto = cursoService.obtenerCursoPorId(id);
+    if (dto == null) {
+        return ResponseEntity.notFound().build();
+    }
+    return ResponseEntity.ok(dto);
 }
+
+
 
 
 @PostMapping("/{id}/asistencia")

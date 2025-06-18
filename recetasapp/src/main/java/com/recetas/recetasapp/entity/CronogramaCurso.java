@@ -4,6 +4,7 @@ import java.sql.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
@@ -26,6 +27,7 @@ public class CronogramaCurso {
     private Sede sede;
 
     @ManyToOne
+    @JsonBackReference
     private Curso curso;
 
     private Date fechaInicio;

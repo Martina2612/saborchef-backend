@@ -1,6 +1,8 @@
 package com.recetas.recetasapp.dto;
 
 import java.sql.Date;
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -18,4 +20,5 @@ public class CursoDisponibleDTO {
     private String imagenUrl;
     private String nivel;
     private String chef;
+    private List<CronogramaDTO> cronogramas;
 }

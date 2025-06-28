@@ -32,7 +32,7 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
             // Públicos: login, registro, confirmar
             .requestMatchers("/api/auth/**").permitAll()
             .requestMatchers("/api/sedes/**").permitAll()
-
+            .requestMatchers("/api/cronogramas/**").permitAll()
             //  PRIMERO: Endpoints de password recovery (MÁS ESPECÍFICOS)
             .requestMatchers(HttpMethod.POST, "/api/usuarios/password/send-code").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/usuarios/password/verify-code").permitAll()

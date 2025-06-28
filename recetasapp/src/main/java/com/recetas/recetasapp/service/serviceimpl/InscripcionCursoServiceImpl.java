@@ -11,6 +11,7 @@ import com.recetas.recetasapp.entity.InscripcionCurso;
 import com.recetas.recetasapp.repository.AlumnoRepository;
 import com.recetas.recetasapp.repository.CronogramaCursoRepository;
 import com.recetas.recetasapp.repository.InscripcionCursoRepository;
+import com.recetas.recetasapp.service.EmailService;
 import com.recetas.recetasapp.service.InscripcionCursoService;
 
 @Service
@@ -25,35 +26,56 @@ public class InscripcionCursoServiceImpl implements InscripcionCursoService {
     @Autowired
     private AlumnoRepository alumnoRepo;
 
+    @Autowired
+    private EmailService emailService;
+
+
     @Override
-    public InscripcionCurso inscribirAlumno(Long idCronograma, Long idAlumno) {
-        CronogramaCurso cronograma = cronogramaRepo.findById(idCronograma)
-            .orElseThrow(() -> new RuntimeException("Curso no encontrado"));
+public InscripcionCurso inscribirAlumno(Long idCronograma, Long idAlumno) {
+    CronogramaCurso cronograma = cronogramaRepo.findById(idCronograma)
+        .orElseThrow(() -> new RuntimeException("Curso no encontrado"));
 
-        if (cronograma.getVacantesDisponibles() == null || cronograma.getVacantesDisponibles() <= 0) {
-            throw new RuntimeException("No hay vacantes disponibles");
-        }
-
-        Alumno alumno = alumnoRepo.findById(idAlumno)
-            .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
-
-        // Verificar si ya está inscripto
-        boolean yaInscripto = inscripcionRepo.existsByAlumnoAndCronograma(alumno, cronograma);
-        if (yaInscripto) {
-            throw new RuntimeException("El alumno ya está inscripto en este curso");
-        }
-
-        // Crear y guardar inscripción
-        InscripcionCurso inscripcion = new InscripcionCurso();
-        inscripcion.setAlumno(alumno);
-        inscripcion.setCronograma(cronograma);
-        inscripcion.setFechaInscripcion(new Date(System.currentTimeMillis()));
-        inscripcionRepo.save(inscripcion);
-
-        // Restar una vacante
-        cronograma.setVacantesDisponibles(cronograma.getVacantesDisponibles() - 1);
-        cronogramaRepo.save(cronograma);
-
-        return inscripcion;
+    if (cronograma.getVacantesDisponibles() == null || cronograma.getVacantesDisponibles() <= 0) {
+        throw new RuntimeException("No hay vacantes disponibles");
     }
+
+    Alumno alumno = alumnoRepo.findById(idAlumno)
+        .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
+
+    boolean yaInscripto = inscripcionRepo.existsByAlumnoAndCronograma(alumno, cronograma);
+    if (yaInscripto) {
+        throw new RuntimeException("El alumno ya está inscripto en este curso");
+    }
+
+    // Crear inscripción
+    InscripcionCurso inscripcion = new InscripcionCurso();
+    inscripcion.setAlumno(alumno);
+    inscripcion.setCronograma(cronograma);
+    inscripcion.setFechaInscripcion(new Date(System.currentTimeMillis()));
+    inscripcionRepo.save(inscripcion);
+
+    // Actualizar vacantes
+    cronograma.setVacantesDisponibles(cronograma.getVacantesDisponibles() - 1);
+    cronogramaRepo.save(cronograma);
+
+    // Enviar mail de confirmación
+    enviarMailConfirmacion(alumno, cronograma);
+
+    return inscripcion;
+}
+
+private void enviarMailConfirmacion(Alumno alumno, CronogramaCurso cronograma) {
+    String to = alumno.getUsuario().getEmail(); // ✅ accediendo desde Usuario
+    String nombre = alumno.getUsuario().getNombre(); // ✅ accediendo desde Usuario
+
+    String subject = "Inscripción confirmada: " + cronograma.getCurso().getNombre();
+    String body = "Hola " + nombre + ",\n\n" +
+            "Te confirmamos que te inscribiste correctamente al curso: " + cronograma.getCurso().getNombre() + ".\n" +
+            "Fecha de inicio: " + cronograma.getFechaInicio() + "\n" +
+            "Gracias por confiar en SaborChef.\n\n" +
+            "Este mail es tu comprobante.";
+
+    emailService.enviarEmail(to, subject, body); // ✅ usás tu EmailService
+}
+
 }

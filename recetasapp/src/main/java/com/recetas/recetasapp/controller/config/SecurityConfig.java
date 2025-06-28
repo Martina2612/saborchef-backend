@@ -31,6 +31,7 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
             .requestMatchers("/v3/api-docs/**","/v3/api-docs/swagger-config", "/swagger-ui/**","/swagger-ui.html","/swagger-resources/**","/webjars/**").permitAll()
             // Públicos: login, registro, confirmar
             .requestMatchers("/api/auth/**").permitAll()
+            .requestMatchers("/api/sedes/**").permitAll()
 
             //  PRIMERO: Endpoints de password recovery (MÁS ESPECÍFICOS)
             .requestMatchers(HttpMethod.POST, "/api/usuarios/password/send-code").permitAll()

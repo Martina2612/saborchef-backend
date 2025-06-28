@@ -33,9 +33,10 @@ public class SedeController {
 
     // Obtener sede por id
     @GetMapping("/{id}")
-    public ResponseEntity<Sede> obtenerSedePorId(@PathVariable Long id) {
-        return sedeService.obtenerSedePorId(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+    public ResponseEntity<Sede> obtenerSedePorId(@PathVariable("id") Long id) {
+    return sedeService.obtenerSedePorId(id)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
+}
+
 }

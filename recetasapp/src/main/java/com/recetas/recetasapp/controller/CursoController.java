@@ -72,20 +72,21 @@ public ResponseEntity<String> registrarAsistencia(
 
     
     
-    @PostMapping("/cursos/{idCronograma}/{idAlumno}/inscripcion")
-    public ResponseEntity<String> inscribirAlumno(
-            @PathVariable Long idCronograma,
-            @PathVariable Long idAlumno) {
-        try {
-            inscripcionCursoService.inscribirAlumno(idCronograma, idAlumno);
-            return ResponseEntity.ok("Alumno inscrito con éxito");
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("Error al inscribir: " + e.getMessage());
-        }
+@PostMapping("/{idCronograma}/{idAlumno}/inscripcion")
+public ResponseEntity<String> inscribirAlumno(
+        @PathVariable("idCronograma") Long idCronograma,
+        @PathVariable("idAlumno") Long idAlumno) {
+    try {
+        inscripcionCursoService.inscribirAlumno(idCronograma, idAlumno);
+        return ResponseEntity.ok("Alumno inscrito con éxito");
+    } catch (RuntimeException e) {
+        return ResponseEntity.badRequest().body("Error al inscribir: " + e.getMessage());
     }
+}
+
     
     // Nuevo endpoint para listar alumnos inscritos a un curso
-    @GetMapping("/cursos/{id}/alumnos")
+    @GetMapping("/{id}/alumnos")
     public ResponseEntity<List<String>> listarAlumnosInscritos(@PathVariable Long id) {
         try {
             var cronograma = cronogramaCursoRepository.findById(id)

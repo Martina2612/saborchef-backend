@@ -38,6 +38,7 @@ public List<CursoDisponibleDTO> listarCursosDisponibles() {
             Curso curso = entry.getKey();
             List<CronogramaDTO> cronogramaDTOs = entry.getValue().stream()
                 .map(c -> new CronogramaDTO(
+                    c.getIdCronograma(),
                     c.getFechaInicio(),
                     c.getFechaFin(),
                     c.getVacantesDisponibles(),
@@ -87,6 +88,7 @@ public CursoDisponibleDTO obtenerCursoPorId(Long id) {
 
         List<CronogramaDTO> cronogramaDTOs = cronogramas.stream()
             .map(c -> new CronogramaDTO(
+                c.getIdCronograma(),
                 c.getFechaInicio(),
                 c.getFechaFin(),
                 c.getVacantesDisponibles(),

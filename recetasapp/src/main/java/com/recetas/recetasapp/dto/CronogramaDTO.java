@@ -8,6 +8,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class CronogramaDTO {
+    private Long idCronograma;
     private Date fechaInicio;
     private Date fechaFin;
     private Integer vacantesDisponibles;

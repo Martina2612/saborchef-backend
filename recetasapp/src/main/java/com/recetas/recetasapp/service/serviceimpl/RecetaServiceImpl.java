@@ -97,103 +97,106 @@ public List<RecetaDetalleResponse> obtenerUltimas3Recetas() {
 
 
     @Override
-    public void crearReceta(RecetaCrearRequest req) {
-        var usuario = usuarioRepository.findById(req.getIdUsuario())
-            .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+@Transactional
+public void crearReceta(RecetaCrearRequest req) {
+    var usuario = usuarioRepository.findById(req.getIdUsuario())
+        .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
-        // Compruebo existencia de receta con ese nombre para este usuario
-        recetaRepository.findByUsuarioIdAndNombreRecetaIgnoreCase(usuario.getId(), req.getNombreReceta())
+    // Validar receta duplicada
+    recetaRepository.findByUsuarioIdAndNombreRecetaIgnoreCase(usuario.getId(), req.getNombreReceta())
         .ifPresent(existing -> {
             throw new DuplicateResourceException(
                 "El usuario con ID " + usuario.getId() + " ya tiene una receta llamada '" + req.getNombreReceta() + "'",
                 existing.getIdReceta()
             );
         });
-        Categoria cat;
-        try {
-            cat = Categoria.valueOf(req.getTipo().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new ResourceNotFoundException("Categoría inválida: " + req.getTipo());
-        }
 
-        var tipo = tipoRecetaRepository.findByDescripcion(cat)
-            .orElseGet(() -> tipoRecetaRepository.save(new TipoReceta(null, cat)));
-
-        System.out.println("Foto principal: " + req.getFotoPrincipal() + " (" + req.getFotoPrincipal().length() + ")");
-
-        // Crear la receta sin relaciones primero
-        var recetaNueva = new Receta();
-        recetaNueva.setUsuario(usuario);
-        recetaNueva.setTipo(tipo);
-        recetaNueva.setNombreReceta(req.getNombreReceta());
-        recetaNueva.setDescripcionReceta(req.getDescripcionReceta());
-        recetaNueva.setFotoPrincipal(req.getFotoPrincipal());
-        recetaNueva.setPorciones(req.getPorciones());
-        recetaNueva.setFechaCreacion(LocalDateTime.now());
-        recetaNueva.setDuracion(req.getDuracion());
-
-        // Guardar la receta para que tenga ID (necesario para las relaciones)
-        var recetaGuardada = recetaRepository.save(recetaNueva);
-
-        // Mapear ingredientes utilizados y asignar recetaGuardada
-        var utilizados = req.getIngredientes().stream().map(ic -> {
-            var ingr = ingredienteRepository.findByNombreIgnoreCase(ic.getNombreIngrediente())
-                .orElseGet(() -> ingredienteRepository.save(new Ingrediente(null, ic.getNombreIngrediente())));
-
-            var uniDesc = ic.getUnidad().toLowerCase(Locale.ROOT);
-            var valid = List.of("kg", "gr", "ml", "litros", "unid.");
-            if (!valid.contains(uniDesc)) {
-                throw new ResourceNotFoundException("Unidad inválida: " + ic.getUnidad());
-            }
-            var unidad = unidadRepository.findByDescripcionIgnoreCase(uniDesc)
-                .orElseGet(() -> unidadRepository.save(new Unidad(null, uniDesc)));
-
-            var u = new Utilizado();
-            u.setIngrediente(ingr);
-            u.setUnidad(unidad);
-            u.setCantidad(ic.getCantidad());
-            u.setObservaciones(ic.getObservaciones());
-            u.setReceta(recetaGuardada);
-            return u;
-        }).collect(Collectors.toList());
-        recetaGuardada.setUtilizados(utilizados);
-
-        // Mapear pasos y asignar recetaGuardada
-        var pasos = req.getPasos().stream().map(pc -> {
-            var p = new Pasos();
-            p.setNroPaso(pc.getNroPaso());
-            p.setTexto(pc.getTexto());
-            p.setReceta(recetaGuardada);
-
-            var cont = pc.getContenidos().stream().map(mc -> {
-                var m = new Multimedia();
-                m.setTipoContenido(mc.getTipoContenido());
-                m.setExtension(mc.getExtension());
-                m.setUrlContenido(mc.getUrlContenido());
-                m.setPaso(p);
-                return m;
-            }).collect(Collectors.toList());
-            p.setContenidos(cont);
-            return p;
-        }).collect(Collectors.toList());
-        recetaGuardada.setPasos(pasos);
-
-        // Mapear fotos y asignar recetaGuardada
-        if (req.getFotos() != null) {
-            var fotos = req.getFotos().stream().map(fc -> {
-                var f = new Foto();
-                f.setUrlFoto(fc.getUrlFoto());
-                f.setExtension(getExtension(fc.getUrlFoto()));
-                f.setDescripcion(fc.getDescripcion());
-                f.setReceta(recetaGuardada);
-                return f;
-            }).collect(Collectors.toList());
-            recetaGuardada.setFotos(fotos);
-        }
-
-        // Guardar nuevamente con las relaciones ya asignadas
-        recetaRepository.save(recetaGuardada);
+    // Validar tipo de receta
+    Categoria cat;
+    try {
+        cat = Categoria.valueOf(req.getTipo().toUpperCase());
+    } catch (IllegalArgumentException e) {
+        throw new ResourceNotFoundException("Categoría inválida: " + req.getTipo());
     }
+
+    var tipo = tipoRecetaRepository.findByDescripcion(cat)
+        .orElseGet(() -> tipoRecetaRepository.save(new TipoReceta(null, cat)));
+
+    // Crear receta sin guardarla aún
+    var receta = new Receta();
+    receta.setUsuario(usuario);
+    receta.setTipo(tipo);
+    receta.setNombreReceta(req.getNombreReceta());
+    receta.setDescripcionReceta(req.getDescripcionReceta());
+    receta.setFotoPrincipal(req.getFotoPrincipal());
+    receta.setPorciones(req.getPorciones());
+    receta.setDuracion(req.getDuracion());
+    receta.setCantidadPersonas(req.getPorciones());
+    receta.setFechaCreacion(LocalDateTime.now());
+    receta.setHabilitada(false); // o true si querés que ya esté visible
+
+    // Ingredientes utilizados
+    var utilizados = req.getIngredientes().stream().map(ic -> {
+        var ingr = ingredienteRepository.findByNombreIgnoreCase(ic.getNombreIngrediente())
+            .orElseGet(() -> ingredienteRepository.save(new Ingrediente(null, ic.getNombreIngrediente())));
+
+        var unidadDesc = ic.getUnidad().toLowerCase(Locale.ROOT);
+        var unidadesValidas = List.of("kg", "gr", "ml", "litros", "unid.");
+        if (!unidadesValidas.contains(unidadDesc)) {
+            throw new ResourceNotFoundException("Unidad inválida: " + ic.getUnidad());
+        }
+
+        var unidad = unidadRepository.findByDescripcionIgnoreCase(unidadDesc)
+            .orElseGet(() -> unidadRepository.save(new Unidad(null, unidadDesc)));
+
+        var u = new Utilizado();
+        u.setIngrediente(ingr);
+        u.setUnidad(unidad);
+        u.setCantidad(ic.getCantidad());
+        u.setObservaciones(ic.getObservaciones());
+        u.setReceta(receta);
+        return u;
+    }).toList();
+    receta.setUtilizados(utilizados);
+
+    // Pasos y contenidos multimedia
+    var pasos = req.getPasos().stream().map(pc -> {
+        var paso = new Pasos();
+        paso.setNroPaso(pc.getNroPaso());
+        paso.setTexto(pc.getTexto());
+        paso.setReceta(receta);
+
+        var contenidos = pc.getContenidos().stream().map(mc -> {
+            var m = new Multimedia();
+            m.setTipoContenido(mc.getTipoContenido());
+            m.setExtension(mc.getExtension());
+            m.setUrlContenido(mc.getUrlContenido());
+            m.setPaso(paso);
+            return m;
+        }).toList();
+
+        paso.setContenidos(contenidos);
+        return paso;
+    }).toList();
+    receta.setPasos(pasos);
+
+    // Fotos adicionales
+    if (req.getFotos() != null) {
+        var fotos = req.getFotos().stream().map(fc -> {
+            var foto = new Foto();
+            foto.setUrlFoto(fc.getUrlFoto());
+            foto.setExtension(getExtension(fc.getUrlFoto()));
+            foto.setDescripcion(fc.getDescripcion());
+            foto.setReceta(receta);
+            return foto;
+        }).toList();
+        receta.setFotos(fotos);
+    }
+
+    // Guardar todo en una sola transacción
+    recetaRepository.save(receta);
+}
+
 
 
 

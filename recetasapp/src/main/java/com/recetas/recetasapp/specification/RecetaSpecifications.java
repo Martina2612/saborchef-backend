@@ -13,7 +13,7 @@ import java.util.Locale;
 
 public class RecetaSpecifications {
     public static Specification<Receta> conUsuario(Long idUsuario) {
-        return (root, query, cb) -> cb.equal(root.get("usuario").get("idUsuario"), idUsuario);
+        return (root, query, cb) -> cb.equal(root.get("usuario").get("id"), idUsuario);
     }
 
     public static Specification<Receta> conTipoId(Long idTipo) {

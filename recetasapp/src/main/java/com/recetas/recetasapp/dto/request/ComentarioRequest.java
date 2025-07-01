@@ -5,5 +5,5 @@ import lombok.Data;
 @Data
 public class ComentarioRequest {
     private Long idReceta;
-    private String comentario;
+    private String texto;
 }

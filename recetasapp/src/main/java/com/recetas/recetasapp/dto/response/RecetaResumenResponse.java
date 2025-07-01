@@ -20,4 +20,5 @@ public class RecetaResumenResponse {
     private String tipo;
     private String nombreUsuario;
     private LocalDateTime fechaCreacion;
+    private Integer duracion;
 }

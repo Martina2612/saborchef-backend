@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -37,7 +38,7 @@ public class Receta {
     @Column(length = 1000)
     private String descripcionReceta;
 
-    
+    @Column(name = "foto_principal", columnDefinition = "TEXT")
     private String fotoPrincipal;
     private Integer porciones;
     private Integer duracion;

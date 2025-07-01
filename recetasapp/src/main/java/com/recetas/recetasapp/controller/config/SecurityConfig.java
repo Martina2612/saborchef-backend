@@ -46,6 +46,8 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
             .requestMatchers(HttpMethod.GET, "/api/recetas/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/cursos/**").permitAll()
 
+            .requestMatchers(HttpMethod.POST, "/api/recetas/buscar").permitAll()
+
             // Usuarios (login requerido)
             .requestMatchers(HttpMethod.POST, "/api/recetas/**").hasAnyAuthority("ROLE_USUARIO", "ROLE_ALUMNO", "ROLE_ADMIN")
             .requestMatchers(HttpMethod.PUT, "/api/recetas/**").hasAnyAuthority("ROLE_USUARIO", "ROLE_ALUMNO", "ROLE_ADMIN")
@@ -59,7 +61,8 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
             //Calificaciones y comentarios (solo alumnos y usuarios)
             .requestMatchers(HttpMethod.POST, "/api/calificaciones/**").hasAnyAuthority("ROLE_USUARIO", "ROLE_ALUMNO", "ROLE_ADMIN")
             .requestMatchers(HttpMethod.GET, "/api/calificaciones/**").permitAll()
-
+            .requestMatchers(HttpMethod.POST, "/api/comentarios/**").hasAnyAuthority("ROLE_USUARIO", "ROLE_ALUMNO", "ROLE_ADMIN")
+            .requestMatchers(HttpMethod.GET, "/api/comentarios/**").permitAll()
             //Endpoinsts de recetas favoritas (solo usuarios y alumnos)
             .requestMatchers("/api/favoritas/**").hasAnyAuthority("ROLE_USUARIO", "ROLE_ALUMNO", "ROLE_ADMIN")
 

@@ -1,8 +1,17 @@
 package com.recetas.recetasapp.entity;
 
 public enum Categoria {
-    POSTRE,
-    SALADO,
+    DESAYUNO,
+    ALMUERZO,
+    PASTAS,
+    CENA,
+    POSTRES,
+    SNACKS,
     VEGETARIANO,
-    ENSALADA
+    VEGANO,
+    ENSALADA,
+    SOPAS,
+    CARNE,
+    BEBIDAS,
+    TARTAS
 }

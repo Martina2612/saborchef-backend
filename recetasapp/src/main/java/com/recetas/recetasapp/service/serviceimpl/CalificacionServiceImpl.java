@@ -29,50 +29,43 @@ public class CalificacionServiceImpl implements CalificacionService {
     private final UsuarioRepository usuarioRepository;
     private final RecetaRepository recetaRepository;
 
-    @Override
-    @Transactional
-    public void comentar(Long idUsuario, ComentarioRequest request) {
-        Usuario usuario = usuarioRepository.findById(idUsuario).orElseThrow();
-        Receta receta = recetaRepository.findById(request.getIdReceta()).orElseThrow();
-
-        Calificacion comentario = new Calificacion();
-        comentario.setUsuario(usuario);
-        comentario.setReceta(receta);
-        comentario.setComentarios(request.getComentario());
-
-        calificacionRepository.save(comentario);
-    }
 
     @Override
-    @Transactional
-    public void calificar(Long idUsuario, CalificacionRequest request) {
-        if (request.getCalificacion() < 1 || request.getCalificacion() > 5)
-            throw new IllegalArgumentException("La calificación debe estar entre 1 y 5.");
+@Transactional
+public void calificar(Long idUsuario, CalificacionRequest request) {
+    if (request.getCalificacion() < 1 || request.getCalificacion() > 5)
+        throw new IllegalArgumentException("La calificación debe estar entre 1 y 5.");
 
-        Usuario usuario = usuarioRepository.findById(idUsuario).orElseThrow();
-        Receta receta = recetaRepository.findById(request.getIdReceta()).orElseThrow();
+    Usuario usuario = usuarioRepository.findById(idUsuario)
+        .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    Receta receta = recetaRepository.findById(request.getIdReceta())
+        .orElseThrow(() -> new RuntimeException("Receta no encontrada"));
 
-        Calificacion calificacion = new Calificacion();
-        calificacion.setUsuario(usuario);
-        calificacion.setReceta(receta);
-        calificacion.setCalificacion(request.getCalificacion());
+    // 1) Buscamos si ya existe
+    List<Calificacion> existentes = calificacionRepository
+        .findByUsuario_IdAndReceta_IdReceta(idUsuario, request.getIdReceta());
 
-        calificacionRepository.save(calificacion);
+    Calificacion calificacion;
+    if (existentes.isEmpty()) {
+        calificacion= new Calificacion();
+    } else {
+        // me quedo con la primera y, opcionalmente, borro el resto
+        calificacion = existentes.get(0);
+        if (existentes.size() > 1) {
+            calificacionRepository.deleteAll(existentes.subList(1, existentes.size()));
+        }
     }
+    // 2) Seteamos/actualizamos campos
+    calificacion.setUsuario(usuario);
+    calificacion.setReceta(receta);
+    calificacion.setCalificacion(request.getCalificacion());
+    // (si tu DTO trae comentarios, aquí los setearías también)
+    // calificacion.setComentarios(request.getComentarios());
 
-    @Override
-    public List<ComentarioResponse> obtenerComentarios(Long idReceta) {
-        Receta receta = recetaRepository.findById(idReceta).orElseThrow();
-        return calificacionRepository.findByReceta(receta).stream()
-                .filter(c -> c.getComentarios() != null && !c.getComentarios().isBlank())
-                .map(c -> {
-                    ComentarioResponse dto = new ComentarioResponse();
-                    dto.setNombreUsuario(c.getUsuario().getNombre());
-                    dto.setComentario(c.getComentarios());
-                    return dto;
-                })
-                .collect(Collectors.toList());
-    }
+    // 3) Guardamos (insert o update)
+    calificacionRepository.save(calificacion);
+}
+
 
     @Override
     public Double obtenerPromedioCalificacion(Long idReceta) {
@@ -107,6 +100,14 @@ public class CalificacionServiceImpl implements CalificacionService {
             dto.setPromedioCalificacion(promedio);
             return dto;
         }).toList();
+    }
+
+    public int obtenerCalificacionUsuario(Long userId, Long recetaId) {
+        return calificacionRepository.findByUsuario_IdAndReceta_IdReceta(userId, recetaId)
+                .stream()
+                .findFirst()
+                .map(cal -> cal.getCalificacion())
+                .orElse(0);
     }
 
 }

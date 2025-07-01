@@ -16,14 +16,15 @@ public interface RecetaService {
     void eliminarReceta(Long id);
     RecetaDetalleResponse obtenerReceta(Long id);
     List<RecetaResumenResponse> listarRecetas(Long idUsuario, Long idTipo, String orden);
-    List<RecetaResumenResponse> buscarPorNombre(String nombre, String orden);
-    List<RecetaResumenResponse> buscarPorTipo(String tipo, String orden);
-    List<RecetaResumenResponse> buscarPorIngrediente(String nombre, String orden);
-    List<RecetaResumenResponse> buscarSinIngrediente(String nombre, String orden);
-    List<RecetaResumenResponse> buscarPorUsuario(String nombreUsuario, String orden);
-    List<RecetaResumenResponse> buscarPorFiltros(RecetaFiltroRequest filtro);
+    List<RecetaDetalleResponse> buscarPorNombre(String nombre, String orden);
+    List<RecetaDetalleResponse> buscarPorTipo(String tipo, String orden);
+    List<RecetaDetalleResponse> buscarPorIngrediente(String nombre, String orden);
+    List<RecetaDetalleResponse> buscarSinIngrediente(String nombre, String orden);
+    List<RecetaDetalleResponse> buscarPorUsuario(String nombreUsuario, String orden);
+    List<RecetaDetalleResponse> buscarPorFiltros(RecetaFiltroRequest filtro);
     List<RecetaDetalleResponse> obtenerUltimas3Recetas();
     List<RecetaDetalleResponse> obtenerUltimasRecetas();
+    List<RecetaDetalleResponse> buscarPorUsuarioId(Long usuarioId, String orden);
  /**
      * Devuelve la receta escalada en base a un factor fijo. Por ejemplo factor=2.0 => doble de cantidad.
      */

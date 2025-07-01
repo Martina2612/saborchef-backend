@@ -8,9 +8,8 @@ import com.recetas.recetasapp.dto.response.TopRecetaResponse;
 import java.util.List;
 
 public interface CalificacionService {
-    void comentar(Long idUsuario, ComentarioRequest request);
     void calificar(Long idUsuario, CalificacionRequest request);
-    List<ComentarioResponse> obtenerComentarios(Long idReceta);
     Double obtenerPromedioCalificacion(Long idReceta);
     List<TopRecetaResponse> obtenerTopRecetas(int cantidad);
+    int obtenerCalificacionUsuario(Long userId, Long recetaId);
 }

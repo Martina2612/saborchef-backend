@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface RecetaRepository extends JpaRepository<Receta, Long>, JpaSpecificationExecutor<Receta> {
     List<Receta> findByUsuarioId(Long idUsuario);
@@ -17,4 +18,15 @@ public interface RecetaRepository extends JpaRepository<Receta, Long>, JpaSpecif
     // Para últimas recetas publicadas (12 más recientes)
     List<Receta> findTop12ByOrderByFechaCreacionDesc();
 
+    Optional<Receta> findByUsuarioIdAndNombreRecetaIgnoreCase(Long usuarioId, String nombreReceta);
+
+
+    @Query(
+      "select r.nombreReceta " +
+      "from Receta r " +
+      "where r.habilitada = true " +
+      "  and lower(r.nombreReceta) like lower(concat(:prefix, '%')) " +
+      "order by r.nombreReceta asc"
+    )
+    List<String> findTop10ByNombreRecetaStartingWith(@Param("prefix") String prefix);
 }

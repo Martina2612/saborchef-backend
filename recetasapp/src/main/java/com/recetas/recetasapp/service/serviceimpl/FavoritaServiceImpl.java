@@ -76,9 +76,10 @@ public class FavoritaServiceImpl implements FavoritaService {
     r.setNombre(receta.getNombreReceta());
     r.setDescripcion(receta.getDescripcionReceta());
     r.setFotoPrincipal(receta.getFotoPrincipal());
-    r.setCantidadPersonas(receta.getCantidadPersonas());
+    r.setPorciones(receta.getPorciones());
     r.setTipo(receta.getTipo().getDescripcion().name());
-    r.setNombreUsuario(receta.getUsuario().getNombre());
+    r.setNombreUsuario(receta.getUsuario().getUsername());
+    r.setDuracion(receta.getDuracion());
     r.setFotos(receta.getFotos().stream().map(Foto::getUrlFoto).toList());
 
     // Calcular promedio de calificaciones

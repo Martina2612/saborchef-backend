@@ -14,6 +14,7 @@ import com.recetas.recetasapp.dto.response.RecetaDetalleResponse;
 import com.recetas.recetasapp.dto.response.RecetaEscaladaResponse;
 import com.recetas.recetasapp.dto.response.RecetaResumenResponse;
 import com.recetas.recetasapp.entity.*;
+import com.recetas.recetasapp.exception.DuplicateResourceException;
 import com.recetas.recetasapp.exception.ResourceNotFoundException;
 import com.recetas.recetasapp.repository.IngredienteRepository;
 import com.recetas.recetasapp.repository.RecetaEditadaRepository;
@@ -72,7 +73,7 @@ public List<RecetaDetalleResponse> obtenerUltimas3Recetas() {
 
     @Override
     public List<RecetaResumenResponse> listarRecetas(Long u, Long t, String o) {
-        var spec = Specification.<Receta>where(null);
+        Specification<Receta> spec = Specification.where(conHabilitada());
         if (u!=null) spec = spec.and(conUsuario(u));
         if (t!=null) spec = spec.and(conTipoId(t));
         return recetaRepository.findAll(spec, Sort.unsorted()).stream()
@@ -87,17 +88,27 @@ public List<RecetaDetalleResponse> obtenerUltimas3Recetas() {
     }
 
     @Override
+    @Transactional
     public void eliminarReceta(Long id) {
         if (!recetaRepository.existsById(id))
             throw new ResourceNotFoundException("Receta no encontrada");
         recetaRepository.deleteById(id);
     }
 
+
     @Override
     public void crearReceta(RecetaCrearRequest req) {
         var usuario = usuarioRepository.findById(req.getIdUsuario())
             .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
+        // Compruebo existencia de receta con ese nombre para este usuario
+        recetaRepository.findByUsuarioIdAndNombreRecetaIgnoreCase(usuario.getId(), req.getNombreReceta())
+        .ifPresent(existing -> {
+            throw new DuplicateResourceException(
+                "El usuario con ID " + usuario.getId() + " ya tiene una receta llamada '" + req.getNombreReceta() + "'",
+                existing.getIdReceta()
+            );
+        });
         Categoria cat;
         try {
             cat = Categoria.valueOf(req.getTipo().toUpperCase());
@@ -108,6 +119,8 @@ public List<RecetaDetalleResponse> obtenerUltimas3Recetas() {
         var tipo = tipoRecetaRepository.findByDescripcion(cat)
             .orElseGet(() -> tipoRecetaRepository.save(new TipoReceta(null, cat)));
 
+        System.out.println("Foto principal: " + req.getFotoPrincipal() + " (" + req.getFotoPrincipal().length() + ")");
+
         // Crear la receta sin relaciones primero
         var recetaNueva = new Receta();
         recetaNueva.setUsuario(usuario);
@@ -115,7 +128,7 @@ public List<RecetaDetalleResponse> obtenerUltimas3Recetas() {
         recetaNueva.setNombreReceta(req.getNombreReceta());
         recetaNueva.setDescripcionReceta(req.getDescripcionReceta());
         recetaNueva.setFotoPrincipal(req.getFotoPrincipal());
-        recetaNueva.setCantidadPersonas(req.getCantidadPersonas());
+        recetaNueva.setPorciones(req.getPorciones());
         recetaNueva.setFechaCreacion(LocalDateTime.now());
         recetaNueva.setDuracion(req.getDuracion());
 
@@ -128,7 +141,7 @@ public List<RecetaDetalleResponse> obtenerUltimas3Recetas() {
                 .orElseGet(() -> ingredienteRepository.save(new Ingrediente(null, ic.getNombreIngrediente())));
 
             var uniDesc = ic.getUnidad().toLowerCase(Locale.ROOT);
-            var valid = List.of("kg", "gr", "ml", "litros", "unidad");
+            var valid = List.of("kg", "gr", "ml", "litros", "unid.");
             if (!valid.contains(uniDesc)) {
                 throw new ResourceNotFoundException("Unidad inválida: " + ic.getUnidad());
             }
@@ -193,7 +206,7 @@ public List<RecetaDetalleResponse> obtenerUltimas3Recetas() {
         existing.setNombreReceta(request.getNombreReceta());
         existing.setDescripcionReceta(request.getDescripcionReceta());
         existing.setFotoPrincipal(request.getFotoPrincipal());
-        existing.setCantidadPersonas(request.getCantidadPersonas());
+        existing.setPorciones(request.getPorciones());
 
         // Actualiza tipo
         Categoria cat;
@@ -205,9 +218,6 @@ public List<RecetaDetalleResponse> obtenerUltimas3Recetas() {
         var tipo = tipoRecetaRepository.findByDescripcion(cat)
                 .orElseGet(() -> tipoRecetaRepository.save(new TipoReceta(null, cat)));
         existing.setTipo(tipo);
-
-        // Actualiza usuario si necesario, o dejar igual (normalmente no se cambia)
-        // existing.setUsuario(usuario);
 
         // Actualizar ingredientes utilizados (eliminas los anteriores y agregas nuevos)
         existing.getUtilizados().clear();
@@ -277,109 +287,140 @@ public List<RecetaDetalleResponse> obtenerUltimas3Recetas() {
 
 
     @Override
-    public List<RecetaResumenResponse> buscarPorNombre(String nombre, String orden) {
-        Specification<Receta> spec = Specification.where(conNombre(nombre));
+    public List<RecetaDetalleResponse> buscarPorNombre(String nombre, String orden) {
+        Specification<Receta> spec = Specification.where(conHabilitada()).and(conNombre(nombre));
         return recetaRepository.findAll(spec).stream()
-                .map(this::mapToResumen)
-                .sorted(getComparator(orden))
+                .map(this::mapToDetalle)
+                .sorted(getDetalleComparator(orden))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<RecetaResumenResponse> buscarPorTipo(String tipo, String orden) {
-        Specification<Receta> spec = Specification.where(conTipoDescripcion(tipo));
+    public List<RecetaDetalleResponse> buscarPorTipo(String tipo, String orden) {
+        Specification<Receta> spec = Specification.where(conHabilitada()).and(conTipoDescripcion(tipo));
         return recetaRepository.findAll(spec).stream()
-                .map(this::mapToResumen)
-                .sorted(getComparator(orden))
+                .map(this::mapToDetalle)
+                .sorted(getDetalleComparator(orden))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<RecetaResumenResponse> buscarPorIngrediente(String nombre, String orden) {
+    public List<RecetaDetalleResponse> buscarPorIngrediente(String nombre, String orden) {
         Specification<Receta> spec = Specification.where(conIngrediente(nombre));
         return recetaRepository.findAll(spec).stream()
-                .map(this::mapToResumen)
-                .sorted(getComparator(orden))
+                .map(this::mapToDetalle)
+                .sorted(getDetalleComparator(orden))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<RecetaResumenResponse> buscarSinIngrediente(String nombre, String orden) {
+    public List<RecetaDetalleResponse> buscarSinIngrediente(String nombre, String orden) {
         Specification<Receta> spec = Specification.where(sinIngrediente(nombre));
         return recetaRepository.findAll(spec).stream()
-                .map(this::mapToResumen)
-                .sorted(getComparator(orden))
+                .map(this::mapToDetalle)
+                .sorted(getDetalleComparator(orden))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<RecetaResumenResponse> buscarPorUsuario(String nombreUsuario, String orden) {
+    public List<RecetaDetalleResponse> buscarPorUsuario(String nombreUsuario, String orden) {
         Specification<Receta> spec = Specification.where(conNombreUsuario(nombreUsuario));
         return recetaRepository.findAll(spec).stream()
-                .map(this::mapToResumen)
-                .sorted(getComparator(orden))
+                .map(this::mapToDetalle)
+                .sorted(getDetalleComparator(orden))
+                .collect(Collectors.toList());
+    }
+    
+    @Override
+    public List<RecetaDetalleResponse> buscarPorUsuarioId(Long usuarioId, String orden) {
+        Specification<Receta> spec = Specification.where(conUsuario(usuarioId));
+        return recetaRepository.findAll(spec).stream()
+                .map(this::mapToDetalle)
+                .sorted(getDetalleComparator(orden))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<RecetaResumenResponse> buscarPorFiltros(RecetaFiltroRequest filtro) {
-        Specification<Receta> spec = Specification.where(null);
+public List<RecetaDetalleResponse> buscarPorFiltros(RecetaFiltroRequest filtro) {
+    Specification<Receta> spec = Specification.where(conHabilitada());
 
-        if (filtro.getNombre() != null && !filtro.getNombre().isEmpty()) {
-            spec = spec.and((root, query, cb) ->
-                cb.like(cb.lower(root.get("nombreReceta")), "%" + filtro.getNombre().toLowerCase() + "%"));
-        }
-
-        if (filtro.getUsuario() != null && !filtro.getUsuario().isEmpty()) {
-            spec = spec.and((root, query, cb) ->
-                cb.like(cb.lower(root.get("usuario").get("nombre")), "%" + filtro.getUsuario().toLowerCase() + "%"));
-        }
-
-        if (filtro.getTipo() != null && !filtro.getTipo().isEmpty()) {
-            try {
-                Categoria cat = Categoria.valueOf(filtro.getTipo().toUpperCase());
-                spec = spec.and((root, query, cb) ->
-                    cb.equal(root.get("tipo").get("descripcion"), cat));
-            } catch (IllegalArgumentException e) {
-                throw new ResourceNotFoundException("Tipo de receta inválido: " + filtro.getTipo());
-            }
-        }
-
-        if (filtro.getIngredientesIncluidos() != null && !filtro.getIngredientesIncluidos().isEmpty()) {
-            for (String ing : filtro.getIngredientesIncluidos()) {
-                spec = spec.and((root, query, cb) -> {
-                    var joinUtilizado = root.join("utilizados");
-                    var joinIngrediente = joinUtilizado.join("ingrediente");
-                    return cb.equal(cb.lower(joinIngrediente.get("nombre")), ing.toLowerCase());
-                });
-            }
-        }
-
-        if (filtro.getIngredientesExcluidos() != null && !filtro.getIngredientesExcluidos().isEmpty()) {
-            for (String ing : filtro.getIngredientesExcluidos()) {
-                spec = spec.and((root, query, cb) -> {
-                    var joinUtilizado = root.join("utilizados");
-                    var joinIngrediente = joinUtilizado.join("ingrediente");
-                    return cb.notEqual(cb.lower(joinIngrediente.get("nombre")), ing.toLowerCase());
-                });
-            }
-        }
-
-        Sort sort = Sort.unsorted();
-        if ("nombre_asc".equalsIgnoreCase(filtro.getOrden())) {
-            sort = Sort.by("nombreReceta").ascending();
-        } else if ("nombre_desc".equalsIgnoreCase(filtro.getOrden())) {
-            sort = Sort.by("nombreReceta").descending();
-        } else if ("fecha".equalsIgnoreCase(filtro.getOrden())) {
-            sort = Sort.by("fechaCreacion").descending();
-        }
-
-        List<Receta> recetas = recetaRepository.findAll(spec, sort);
-        return recetas.stream()
-                .map(this::mapToResumen)
-                .collect(Collectors.toList());
+    // Nombre libre
+    if (filtro.getNombre() != null && !filtro.getNombre().isBlank()) {
+        spec = spec.and((root, query, cb) ->
+            cb.like(cb.lower(root.get("nombreReceta")),
+                    "%" + filtro.getNombre().toLowerCase() + "%"));
     }
 
+    // Usuarios (lista)
+    if (filtro.getUsuario() != null && !filtro.getUsuario().isEmpty()) {
+        // construyo un OR sobre cada nombre de usuario
+        Specification<Receta> userSpec = null;
+        for (String usr : filtro.getUsuario()) {
+            String lower = usr.toLowerCase();
+            Specification<Receta> thisOne = (root, query, cb) ->
+                cb.like(cb.lower(root.get("usuario").get("nombre")), "%" + lower + "%");
+            userSpec = (userSpec == null) ? thisOne : userSpec.or(thisOne);
+        }
+        spec = spec.and(userSpec);
+    }
+
+    // Tipos (lista)
+    if (filtro.getTipo() != null && !filtro.getTipo().isEmpty()) {
+        Specification<Receta> typeSpec = null;
+        for (String t : filtro.getTipo()) {
+            try {
+                Categoria cat = Categoria.valueOf(t.toUpperCase(Locale.ROOT));
+                Specification<Receta> thisOne = (root, query, cb) ->
+                    cb.equal(root.get("tipo").get("descripcion"), cat);
+                typeSpec = (typeSpec == null) ? thisOne : typeSpec.or(thisOne);
+            } catch (IllegalArgumentException e) {
+                throw new ResourceNotFoundException("Tipo de receta inválido: " + t);
+            }
+        }
+        spec = spec.and(typeSpec);
+    }
+
+    // Ingredientes incluidos
+    if (filtro.getIngredientesIncluidos() != null && !filtro.getIngredientesIncluidos().isEmpty()) {
+        for (String ing : filtro.getIngredientesIncluidos()) {
+            String lower = ing.toLowerCase();
+            spec = spec.and((root, query, cb) -> {
+                var joinU = root.join("utilizados");
+                var joinI = joinU.join("ingrediente");
+                return cb.equal(cb.lower(joinI.get("nombre")), lower);
+            });
+        }
+    }
+
+    // Ingredientes excluidos
+    if (filtro.getIngredientesExcluidos() != null && !filtro.getIngredientesExcluidos().isEmpty()) {
+        for (String ing : filtro.getIngredientesExcluidos()) {
+            String lower = ing.toLowerCase();
+            spec = spec.and((root, query, cb) -> {
+                var joinU = root.join("utilizados");
+                var joinI = joinU.join("ingrediente");
+                return cb.notEqual(cb.lower(joinI.get("nombre")), lower);
+            });
+        }
+    }
+
+    // Orden
+    Sort sort = Sort.unsorted();
+    if ("nombre_asc".equalsIgnoreCase(filtro.getOrden())) {
+        sort = Sort.by("nombreReceta").ascending();
+    } else if ("nombre_desc".equalsIgnoreCase(filtro.getOrden())) {
+        sort = Sort.by("nombreReceta").descending();
+    } else if ("fecha".equalsIgnoreCase(filtro.getOrden())) {
+        sort = Sort.by("fechaCreacion").descending();
+    } else if ("usuario".equalsIgnoreCase(filtro.getOrden())) {
+        sort = Sort.by("usuario.nombre").ascending();
+    }
+
+    List<Receta> recetas = recetaRepository.findAll(spec, sort);
+    return recetas.stream()
+                  .map(this::mapToDetalle)
+                  .collect(Collectors.toList());
+}
 
 
     private RecetaResumenResponse mapToResumen(Receta receta) {
@@ -387,9 +428,10 @@ public List<RecetaDetalleResponse> obtenerUltimas3Recetas() {
         r.setIdReceta(receta.getIdReceta());
         r.setNombre(receta.getNombreReceta());
         r.setFotoPrincipal(receta.getFotoPrincipal());
-        r.setCantidadPersonas(receta.getCantidadPersonas());
+        r.setCantidadPersonas(receta.getPorciones());
         r.setTipo(receta.getTipo().getDescripcion().name());
-        r.setNombreUsuario(receta.getUsuario().getNombre());
+        r.setNombreUsuario(receta.getUsuario().getUsername());
+        r.setDuracion(receta.getDuracion());
         r.setFechaCreacion(receta.getFechaCreacion());
         double promedio = receta.getCalificaciones().stream()
                 .mapToInt(Calificacion::getCalificacion).average().orElse(0);
@@ -403,9 +445,10 @@ public List<RecetaDetalleResponse> obtenerUltimas3Recetas() {
     r.setNombre(receta.getNombreReceta());
     r.setDescripcion(receta.getDescripcionReceta());
     r.setFotoPrincipal(receta.getFotoPrincipal());
-    r.setCantidadPersonas(receta.getCantidadPersonas());
+    r.setPorciones(receta.getPorciones());
+    r.setDuracion(receta.getDuracion());
     r.setTipo(receta.getTipo().getDescripcion().name());
-    r.setNombreUsuario(receta.getUsuario().getNombre());
+    r.setNombreUsuario(receta.getUsuario().getUsername());
     r.setFotos(receta.getFotos().stream().map(Foto::getUrlFoto).toList());
 
     // Calcular promedio de calificaciones
@@ -665,5 +708,20 @@ public List<RecetaDetalleResponse> obtenerUltimas3Recetas() {
         }
         recetaGuardadaRepository.delete(rg);
     }
+
+    private Comparator<RecetaDetalleResponse> getDetalleComparator(String orden) {
+    if (orden == null) return Comparator.comparing(RecetaDetalleResponse::getIdReceta);
+    return switch (orden.toLowerCase()) {
+        case "nombre" -> Comparator.comparing(RecetaDetalleResponse::getNombre);
+        case "calificacion" -> Comparator.comparing(RecetaDetalleResponse::getPromedioCalificacion).reversed();
+        case "fecha" -> Comparator.comparing(RecetaDetalleResponse::getFechaCreacion).reversed();
+        case "usuario" -> Comparator.comparing(RecetaDetalleResponse::getNombreUsuario);
+        case "fecha_usuario" -> Comparator
+            .comparing(RecetaDetalleResponse::getFechaCreacion).reversed()
+            .thenComparing(RecetaDetalleResponse::getNombreUsuario);
+        default -> Comparator.comparing(RecetaDetalleResponse::getIdReceta);
+    };
+}
+
 
 }

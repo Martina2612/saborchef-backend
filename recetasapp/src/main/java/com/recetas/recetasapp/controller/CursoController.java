@@ -101,6 +101,19 @@ public ResponseEntity<String> inscribirAlumno(
             return ResponseEntity.badRequest().body(null);
         }
 }
+
+@DeleteMapping("/{idCronograma}/{idAlumno}/baja")
+public ResponseEntity<String> darDeBaja(
+        @PathVariable("idCronograma") Long idCronograma,
+        @PathVariable("idAlumno") Long idAlumno) {
+    try {
+        inscripcionCursoService.darDeBaja(idCronograma, idAlumno);
+        return ResponseEntity.ok("Alumno dado de baja con éxito");
+    } catch (RuntimeException e) {
+        return ResponseEntity.badRequest().body("Error al dar de baja: " + e.getMessage());
+    }
+}
+
 }
 
 

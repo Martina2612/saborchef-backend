@@ -78,4 +78,14 @@ private void enviarMailConfirmacion(Alumno alumno, CronogramaCurso cronograma) {
     emailService.enviarEmail(to, subject, body); // ✅ usás tu EmailService
 }
 
+public void darDeBaja(Long idCronograma, Long idAlumno) {
+    InscripcionCurso inscripcion = inscripcionRepo
+        .findByAlumno_IdAlumnoAndCronograma_IdCronograma(idAlumno, idCronograma)
+        .orElseThrow(() -> new RuntimeException("Inscripción no encontrada"));
+
+    inscripcionRepo.delete(inscripcion);
+
+}
+
+
 }

@@ -98,6 +98,7 @@ public class CronogramaCursoServiceImpl implements CronogramaCursoService {
                     curso.getChef(),          
                     cronograma.getFechaInicio(),
                     cronograma.getFechaFin(),
+                    cronograma.getIdCronograma(),
                     new SedeDTO(
                         sede.getIdSede(),
                         sede.getNombreSede(),

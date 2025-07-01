@@ -19,8 +19,10 @@ public class CursoInscriptoDTO {
     private String chef; 
     private Date fechaInicio;
     private Date fechaFin;
+    private Long idCronograma;
     private SedeDTO sede;
     private float progreso;
     private boolean finalizado;
+    
 }
 

@@ -13,5 +13,6 @@ import java.sql.Date;
 public interface AsistenciaCursoRepository extends JpaRepository<AsistenciaCurso, Long> {
 
     boolean existsByAlumnoAndCronogramaAndFecha(Alumno alumno, CronogramaCurso cronograma, Date fecha);
+    int countByAlumno_IdAlumnoAndCronograma_IdCronograma(Long idAlumno, Long idCronograma);
 }
 

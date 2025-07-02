@@ -42,9 +42,10 @@ public class CursoController {
     private AsistenciaCursoService asistenciaCursoService;
 
     @GetMapping
-    public List<CursoDisponibleDTO> listarCursosDisponibles() {
-        return cursoService.listarCursosDisponibles();
-    }
+public List<CursoDisponibleDTO> listarCursosDisponibles(@RequestParam("idUsuario") Long idUsuario) {
+    return cursoService.listarCursosDisponibles(idUsuario);
+}
+
 
     @GetMapping("/{id}")
 public ResponseEntity<CursoDisponibleDTO> obtenerCursoPorId(@PathVariable("id") Long id) {

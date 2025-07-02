@@ -15,6 +15,7 @@ import com.recetas.recetasapp.dto.SedeDTO;
 import com.recetas.recetasapp.entity.CronogramaCurso;
 import com.recetas.recetasapp.entity.Curso;
 import com.recetas.recetasapp.repository.CronogramaCursoRepository;
+import com.recetas.recetasapp.repository.InscripcionCursoRepository;
 import com.recetas.recetasapp.service.CursoService;
 
 @Service
@@ -22,17 +23,31 @@ public class CursoServiceImpl implements CursoService {
 
     @Autowired
     private CronogramaCursoRepository cronogramaCursoRepository;
+    @Autowired
+    private InscripcionCursoRepository inscripcionCursoRepository;
+
     
 
     @Override
-public List<CursoDisponibleDTO> listarCursosDisponibles() {
+public List<CursoDisponibleDTO> listarCursosDisponibles(Long idUsuario) {
     Date hoy = new Date(System.currentTimeMillis());
-    List<CronogramaCurso> cronogramas = cronogramaCursoRepository.findByFechaInicioAfter(hoy);
 
-    // Agrupamos cronogramas por curso
+    // 1. Obtener todas las inscripciones del alumno
+    List<Long> cursosInscriptos = inscripcionCursoRepository.findByAlumno_IdAlumno(idUsuario).stream()
+        .map(insc -> insc.getCronograma().getCurso().getIdCurso())
+        .distinct()
+        .toList();
+
+    // 2. Filtrar cronogramas a futuro cuyos cursos no estén en la lista de inscriptos
+    List<CronogramaCurso> cronogramas = cronogramaCursoRepository.findByFechaInicioAfter(hoy).stream()
+        .filter(c -> !cursosInscriptos.contains(c.getCurso().getIdCurso()))
+        .toList();
+
+    // 3. Agrupar cronogramas por curso
     Map<Curso, List<CronogramaCurso>> cursosAgrupados = cronogramas.stream()
         .collect(Collectors.groupingBy(CronogramaCurso::getCurso));
 
+    // 4. Armar DTOs
     return cursosAgrupados.entrySet().stream()
         .map(entry -> {
             Curso curso = entry.getKey();
@@ -53,7 +68,7 @@ public List<CursoDisponibleDTO> listarCursosDisponibles() {
                         c.getSede().getBonificaCursos(),
                         c.getSede().getTipoPromocion(),
                         c.getSede().getPromocionCursos(),
-                        c.getSede().getImagenUrl() // campo nuevo
+                        c.getSede().getImagenUrl()
                     )
                 ))
                 .collect(Collectors.toList());
@@ -75,6 +90,7 @@ public List<CursoDisponibleDTO> listarCursosDisponibles() {
         })
         .collect(Collectors.toList());
 }
+
 
 
 

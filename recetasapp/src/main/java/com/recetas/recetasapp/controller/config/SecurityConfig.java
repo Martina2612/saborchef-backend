@@ -64,6 +64,9 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
             //Endpoinsts de recetas favoritas (solo usuarios y alumnos)
             .requestMatchers("/api/favoritas/**").hasAnyAuthority("ROLE_USUARIO", "ROLE_ALUMNO", "ROLE_ADMIN")
 
+            //Endpoints para clases
+            .requestMatchers("/api/clases/**").hasAnyAuthority( "ROLE_ALUMNO", "ROLE_ADMIN")
+
             // Admin (gestionar todo)
             .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
 

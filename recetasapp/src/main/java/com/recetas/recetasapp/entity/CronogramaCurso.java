@@ -44,4 +44,7 @@ public class CronogramaCurso {
                 .map(InscripcionCurso::getAlumno)
                 .collect(Collectors.toList());
     }
+    @OneToMany(mappedBy = "cronograma", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Clase> clases;
+
 }

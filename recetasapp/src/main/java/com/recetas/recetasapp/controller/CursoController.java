@@ -58,13 +58,14 @@ public ResponseEntity<CursoDisponibleDTO> obtenerCursoPorId(@PathVariable("id") 
 
 
 
-@PostMapping("/{id}/asistencia")
+@PostMapping("/clase/{claseId}/asistencia")
 public ResponseEntity<String> registrarAsistencia(
-        @PathVariable("id") Long cursoId,
+        @PathVariable("claseId") Long claseId,
         @RequestParam("alumnoId") Long alumnoId) {
-    String mensaje = asistenciaCursoService.registrarAsistencia(alumnoId, cursoId);
+    String mensaje = asistenciaCursoService.registrarAsistencia(alumnoId, claseId);
     return ResponseEntity.ok(mensaje);
 }
+
 
 
 

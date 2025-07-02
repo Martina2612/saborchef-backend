@@ -78,7 +78,7 @@ public class CronogramaCursoServiceImpl implements CronogramaCursoService {
                 Sede sede = cronograma.getSede();
             
                 long totalDias = diasEntre(cronograma.getFechaInicio(), cronograma.getFechaFin());
-                int asistencias = asistenciaRepo.countByAlumno_IdAlumnoAndCronograma_IdCronograma(
+                int asistencias = asistenciaRepo.countByAlumno_IdAlumnoAndClase_Cronograma_IdCronograma(
                     inscripcion.getAlumno().getIdAlumno(),
                     cronograma.getIdCronograma()
                 );

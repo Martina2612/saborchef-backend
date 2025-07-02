@@ -8,10 +8,12 @@ import org.springframework.stereotype.Service;
 
 import com.recetas.recetasapp.entity.Alumno;
 import com.recetas.recetasapp.entity.AsistenciaCurso;
+import com.recetas.recetasapp.entity.Clase;
 import com.recetas.recetasapp.entity.CronogramaCurso;
 import com.recetas.recetasapp.entity.InscripcionCurso;
 import com.recetas.recetasapp.repository.AlumnoRepository;
 import com.recetas.recetasapp.repository.AsistenciaCursoRepository;
+import com.recetas.recetasapp.repository.ClaseRepository;
 import com.recetas.recetasapp.repository.CronogramaCursoRepository;
 import com.recetas.recetasapp.repository.InscripcionCursoRepository;
 import com.recetas.recetasapp.service.AsistenciaCursoService;
@@ -28,43 +30,52 @@ public class AsistenciaCursoServiceImpl implements AsistenciaCursoService {
     private final AlumnoRepository alumnoRepo;
     private final CronogramaCursoRepository cronogramaRepo;
     private final InscripcionCursoRepository inscripcionRepo;
+    private final ClaseRepository claseRepo;
 
     @Transactional
-public String registrarAsistencia(Long alumnoId, Long cursoId) {
-    Date hoy = Date.valueOf(LocalDate.now());
+public String registrarAsistencia(Long alumnoId, Long claseId) {
+    // Obtener la clase y su fecha
+    Clase clase = claseRepo.findById(claseId)
+        .orElseThrow(() -> new RuntimeException("Clase no encontrada"));
+    Date fechaClase = clase.getFechaClase();
 
+    // Verificar que sea hoy
+    Date hoy = Date.valueOf(LocalDate.now());
+    if (!fechaClase.equals(hoy)) {
+        throw new RuntimeException("La asistencia solo puede registrarse el día de la clase.");
+    }
+
+    // Obtener alumno
     Alumno alumno = alumnoRepo.findById(alumnoId)
         .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
 
-    // Buscar todos los cronogramas de ese curso
-    List<CronogramaCurso> cronogramas = cronogramaRepo.findByCurso_IdCurso(cursoId);
-
-    // Buscar un cronograma activo hoy
-    CronogramaCurso cronogramaHoy = cronogramas.stream()
-        .filter(c -> !hoy.before(c.getFechaInicio()) && !hoy.after(c.getFechaFin()))
-        .findFirst()
-        .orElseThrow(() -> new RuntimeException("No hay clase hoy para este curso."));
-
-    // Verificar que el alumno esté inscripto en ese cronograma
-    InscripcionCurso inscripcion = inscripcionRepo
-        .findByAlumno_IdAlumnoAndCronograma_IdCronograma(alumnoId, cronogramaHoy.getIdCronograma())
-        .orElseThrow(() -> new RuntimeException("El alumno no está inscripto en este cronograma."));
-
-    // Verificar si ya registró asistencia hoy
-    boolean yaAsistio = asistenciaRepo.existsByAlumnoAndCronogramaAndFecha(alumno, cronogramaHoy, hoy);
+    // Verificar si ya asistió
+    boolean yaAsistio = asistenciaRepo.existsByAlumnoAndClase(alumno, clase);
     if (yaAsistio) {
-        throw new RuntimeException("Ya se registró la asistencia para hoy.");
+        throw new RuntimeException("Ya se registró la asistencia para esta clase.");
     }
 
+    // Registrar asistencia
     AsistenciaCurso asistencia = new AsistenciaCurso();
     asistencia.setAlumno(alumno);
-    asistencia.setCronograma(cronogramaHoy);
+    asistencia.setClase(clase); 
     asistencia.setFecha(hoy);
 
     asistenciaRepo.save(asistencia);
 
     return "Asistencia registrada correctamente.";
 }
+
+public boolean asistioAClase(Long alumnoId, Long claseId) {
+    Alumno alumno = alumnoRepo.findById(alumnoId)
+        .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
+    Clase clase = claseRepo.findById(claseId)
+        .orElseThrow(() -> new RuntimeException("Clase no encontrada"));
+
+    return asistenciaRepo.existsByAlumnoAndClase(alumno, clase);
+}
+
+
 
 }
 

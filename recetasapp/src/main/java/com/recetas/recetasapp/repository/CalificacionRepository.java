@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface CalificacionRepository extends JpaRepository<Calificacion, Long> {
     List<Calificacion> findByReceta(Receta receta);
@@ -18,4 +19,7 @@ public interface CalificacionRepository extends JpaRepository<Calificacion, Long
        "GROUP BY c.receta " +
        "ORDER BY promedio DESC")
     List<Object[]> findTopRecetasConPromedio(Pageable pageable);
+
+    List<Calificacion> findByUsuario_IdAndReceta_IdReceta(Long usuarioId, Long recetaId);
+
 }

@@ -1,9 +1,15 @@
 package com.recetas.recetasapp.dto.response;
 
-import lombok.Data;
+import java.time.LocalDateTime;
+import lombok.*;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ComentarioResponse {
+    private Long idComentario;
     private String nombreUsuario;
-    private String comentario;
+    private String texto;
+    private LocalDateTime fechaCreacion;
 }

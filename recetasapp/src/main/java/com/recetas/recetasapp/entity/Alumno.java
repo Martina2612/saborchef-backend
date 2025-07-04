@@ -39,11 +39,11 @@ public class Alumno {
 
     // Datos de DNI
     @Lob
-    @Column(name = "dni_frente", columnDefinition = "LONGTEXT")
+    @Column(name = "dni_frente")
     private String dniFrente;
 
     @Lob
-    @Column(name = "dni_dorso", columnDefinition = "LONGTEXT")
+    @Column(name = "dni_dorso")
     private String dniDorso;
 
 

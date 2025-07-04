@@ -2,6 +2,7 @@ package com.recetas.recetasapp.dto.response;
 
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -10,9 +11,11 @@ public class RecetaDetalleResponse {
     private String nombre;
     private String descripcion;
     private String fotoPrincipal;
-    private Integer cantidadPersonas;
+    private Integer porciones;
+    private Integer duracion;
     private String tipo;
     private String nombreUsuario;
+    private LocalDateTime fechaCreacion;
     private List<IngredienteDetalle> ingredientes;
     private List<PasoDetalle> pasos;
     private List<String> fotos;

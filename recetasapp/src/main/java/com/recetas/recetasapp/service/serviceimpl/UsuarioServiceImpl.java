@@ -129,12 +129,12 @@ public class UsuarioServiceImpl implements UsuarioService {
 
         String codigo = String.valueOf(new Random().nextInt(9000) + 1000);
         usuario.setCodigoConfirmacion(codigo);
-        usuario.setCodigoExpira(LocalDateTime.now().plusHours(1));
+        usuario.setCodigoExpira(LocalDateTime.now().plusHours(24));
         usuarioRepository.save(usuario);
 
         String asunto = "Código de recuperación";
         String texto = "Tu código de recuperación es: " + codigo + "\n\n"
-                + "Este código es válido por 1 hora.";
+                + "Este código es válido por 24 horas.";
         emailService.enviarEmail(email, asunto, texto);
     }
 
@@ -160,13 +160,13 @@ public class UsuarioServiceImpl implements UsuarioService {
 
         String nuevoCodigo = String.valueOf(new Random().nextInt(9000) + 1000);
         usuario.setCodigoConfirmacion(nuevoCodigo);
-        usuario.setCodigoExpira(LocalDateTime.now().plusHours(1));
+        usuario.setCodigoExpira(LocalDateTime.now().plusHours(24));
         usuarioRepository.save(usuario);
 
         String asunto = "Nuevo código de recuperación";
         String texto = "Se ha generado un nuevo código de recuperación: "
                 + nuevoCodigo + "\n\n"
-                + "Este código es válido por 1 hora.";
+                + "Este código es válido por 24 horas.";
         emailService.enviarEmail(email, asunto, texto);
         return "Nuevo código enviado correctamente.";
     }

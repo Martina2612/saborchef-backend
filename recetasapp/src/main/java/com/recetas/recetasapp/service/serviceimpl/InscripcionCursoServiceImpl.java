@@ -65,8 +65,8 @@ public InscripcionCurso inscribirAlumno(Long idCronograma, Long idAlumno) {
 }
 
 private void enviarMailConfirmacion(Alumno alumno, CronogramaCurso cronograma) {
-    String to = alumno.getUsuario().getEmail(); // ✅ accediendo desde Usuario
-    String nombre = alumno.getUsuario().getNombre(); // ✅ accediendo desde Usuario
+    String to = alumno.getUsuario().getEmail(); 
+    String nombre = alumno.getUsuario().getNombre(); 
 
     String subject = "Inscripción confirmada: " + cronograma.getCurso().getNombre();
     String body = "Hola " + nombre + ",\n\n" +
@@ -75,16 +75,26 @@ private void enviarMailConfirmacion(Alumno alumno, CronogramaCurso cronograma) {
             "Gracias por confiar en SaborChef.\n\n" +
             "Este mail es tu comprobante.";
 
-    emailService.enviarEmail(to, subject, body); // ✅ usás tu EmailService
+    emailService.enviarEmail(to, subject, body); 
 }
 
 public void darDeBaja(Long idCronograma, Long idAlumno) {
+    // Buscar la inscripción
     InscripcionCurso inscripcion = inscripcionRepo
         .findByAlumno_IdAlumnoAndCronograma_IdCronograma(idAlumno, idCronograma)
         .orElseThrow(() -> new RuntimeException("Inscripción no encontrada"));
-
+    
+    // Obtener el cronograma para actualizar las vacantes
+    CronogramaCurso cronograma = inscripcion.getCronograma();
+    
+    // Incrementar las vacantes disponibles
+    cronograma.setVacantesDisponibles(cronograma.getVacantesDisponibles() + 1);
+    
+    // Eliminar la inscripción
     inscripcionRepo.delete(inscripcion);
-
+    
+    
+    cronogramaRepo.save(cronograma);
 }
 
 

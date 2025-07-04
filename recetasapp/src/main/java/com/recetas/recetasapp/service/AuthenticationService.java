@@ -56,7 +56,7 @@ public class AuthenticationService {
                 .rol(request.getRole())
                 .habilitado(false)
                 .codigoConfirmacion(codigoGenerado)
-                .codigoExpira(LocalDateTime.now().plusHours(1))
+                .codigoExpira(LocalDateTime.now().plusHours(24))
                 .build();
     
         repository.save(user);
@@ -80,7 +80,7 @@ public class AuthenticationService {
         String asunto = "Confirmación de cuenta";
         String texto = "Hola " + user.getNombre() + ",\n\n"
                 + "Tu código de confirmación es: " + codigoGenerado + "\n"
-                + "Este código es válido por 1 hora.\n\n"
+                + "Este código es válido por 24 horas.\n\n"
                 + "¡Gracias por registrarte en SaborChef!";
         emailService.enviarEmail(user.getEmail(), asunto, texto);
     

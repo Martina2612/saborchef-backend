@@ -9,7 +9,7 @@ public enum Categoria {
     SNACKS,
     VEGETARIANO,
     VEGANO,
-    ENSALADA,
+    ENSALADAS,
     SOPAS,
     CARNE,
     BEBIDAS,

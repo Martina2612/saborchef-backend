@@ -32,11 +32,19 @@ public class CursoServiceImpl implements CursoService {
 public List<CursoDisponibleDTO> listarCursosDisponibles(Long idUsuario) {
     Date hoy = new Date(System.currentTimeMillis());
 
-    // 1. Obtener todas las inscripciones del alumno
-    List<Long> cursosInscriptos = inscripcionCursoRepository.findByAlumno_IdAlumno(idUsuario).stream()
-        .map(insc -> insc.getCronograma().getCurso().getIdCurso())
-        .distinct()
-        .toList();
+    List<Long> cursosInscriptos;
+    
+    // CAMBIO: Manejar visitantes (idUsuario == -1 o null)
+    if (idUsuario == null || idUsuario == -1L) {
+        // Para visitantes: no hay cursos inscriptos, mostrar todos
+        cursosInscriptos = List.of(); // Lista vacía
+    } else {
+        // Para usuarios autenticados: obtener sus inscripciones
+        cursosInscriptos = inscripcionCursoRepository.findByAlumno_IdAlumno(idUsuario).stream()
+            .map(insc -> insc.getCronograma().getCurso().getIdCurso())
+            .distinct()
+            .toList();
+    }
 
     // 2. Filtrar cronogramas a futuro cuyos cursos no estén en la lista de inscriptos
     List<CronogramaCurso> cronogramas = cronogramaCursoRepository.findByFechaInicioAfter(hoy).stream()

@@ -54,7 +54,12 @@ public class Usuario implements UserDetails{
 
     @Column
     private LocalDateTime codigoExpira;
+    
+    @Column(name = "telefono")
+    private String telefono;
 
+    @Column(name = "foto_perfil")
+    private String fotoPerfil; // Guardará la URL de la foto
 
 
     @Override

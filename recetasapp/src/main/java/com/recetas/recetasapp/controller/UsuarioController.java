@@ -5,6 +5,7 @@ import com.recetas.recetasapp.dto.CodigoVerificacionDto;
 import com.recetas.recetasapp.dto.ConfirmacionCodigoDTO;
 import com.recetas.recetasapp.dto.EmailDTO;
 import com.recetas.recetasapp.dto.ResetPasswordDto;
+import com.recetas.recetasapp.dto.UsuarioPerfilDTO; // NUEVO IMPORT
 import com.recetas.recetasapp.dto.request.RecoveryRequestDTO;
 import com.recetas.recetasapp.dto.response.PasswordResetResponse;
 import com.recetas.recetasapp.dto.response.VerifyCodeResponse;
@@ -15,7 +16,12 @@ import com.recetas.recetasapp.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile; // NUEVO IMPORT
 
+import java.io.IOException; // NUEVO IMPORT
+import java.nio.file.Files; // NUEVO IMPORT
+import java.nio.file.Path; // NUEVO IMPORT
+import java.nio.file.Paths; // NUEVO IMPORT
 import java.util.Map;
 
 @RestController
@@ -88,7 +94,7 @@ public class UsuarioController {
     }
 
     // ------------------------------------------------------------------------------------
-    // Nuevos endpoints para validar alias/email
+    // Endpoints para validar alias/email
 
     /**
      * Comprueba si un alias ya existe.
@@ -98,8 +104,7 @@ public class UsuarioController {
     public ResponseEntity<Map<String, Boolean>> aliasExists(@PathVariable("alias") String alias) {
         boolean exists = usuarioService.aliasExists(alias);
         return ResponseEntity.ok(Map.of("exists", exists));
-}
-
+    }
 
     /**
      * Comprueba si un email ya está registrado.
@@ -108,5 +113,82 @@ public class UsuarioController {
     public ResponseEntity<Map<String, Boolean>> emailExists(@RequestParam("email") String email) {
         boolean exists = usuarioService.emailExists(email);
         return ResponseEntity.ok(Map.of("exists", exists));
+    }
+
+    // ------------------------------------------------------------------------------------
+    // NUEVOS ENDPOINTS PARA PERFIL DE USUARIO
+
+    /**
+     * Obtiene el perfil de un usuario por ID
+     * GET /api/usuarios/perfil/{userId}
+     */
+    @GetMapping("/perfil/{userId}")
+    public ResponseEntity<UsuarioPerfilDTO> obtenerPerfil(@PathVariable Long userId) {
+        try {
+            UsuarioPerfilDTO perfil = usuarioService.obtenerPerfil(userId);
+            return ResponseEntity.ok(perfil);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * Actualiza el perfil de un usuario
+     * PUT /api/usuarios/perfil/{userId}
+     */
+    @PutMapping("/perfil/{userId}")
+    public ResponseEntity<UsuarioPerfilDTO> actualizarPerfil(
+            @PathVariable Long userId,
+            @RequestBody UsuarioPerfilDTO perfilDTO) {
+        try {
+            UsuarioPerfilDTO perfilActualizado = usuarioService.actualizarPerfil(userId, perfilDTO);
+            return ResponseEntity.ok(perfilActualizado);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * Sube una foto de perfil para un usuario
+     * POST /api/usuarios/perfil/{userId}/foto
+     */
+    @PostMapping("/perfil/{userId}/foto")
+    public ResponseEntity<Map<String, String>> subirFotoPerfil(
+            @PathVariable Long userId,
+            @RequestParam("foto") MultipartFile file) {
+        try {
+            // Validar archivo
+            if (file.isEmpty() || file.getSize() > 5 * 1024 * 1024) { // 5MB max
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Archivo inválido o muy grande"));
+            }
+            
+            // Crear directorio si no existe
+            String uploadDir = "uploads/profile_photos/";
+            Path uploadPath = Paths.get(uploadDir);
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+            
+            // Generar nombre único
+            String fileName = "user_" + userId + "_" + System.currentTimeMillis() + ".jpg";
+            Path filePath = uploadPath.resolve(fileName);
+            
+            // Guardar archivo
+            Files.copy(file.getInputStream(), filePath);
+            
+            // Actualizar URL en base de datos
+            String fotoUrl = "/" + uploadDir + fileName;
+            usuarioService.actualizarFotoPerfil(userId, fotoUrl);
+            
+            return ResponseEntity.ok(Map.of("fotoUrl", fotoUrl));
+            
+        } catch (IOException e) {
+            return ResponseEntity.status(500)
+                    .body(Map.of("error", "Error al guardar la imagen"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Error en la solicitud"));
+        }
     }
 }

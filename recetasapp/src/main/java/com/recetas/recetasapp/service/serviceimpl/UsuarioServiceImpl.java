@@ -13,6 +13,7 @@ import com.recetas.recetasapp.dto.AlumnoActualizarDTO;
 import com.recetas.recetasapp.dto.ConfirmacionCodigoDTO;
 import com.recetas.recetasapp.dto.request.RecoveryRequestDTO;
 import com.recetas.recetasapp.dto.ResetPasswordDto;
+import com.recetas.recetasapp.dto.UsuarioPerfilDTO; // NUEVO IMPORT
 import com.recetas.recetasapp.repository.UsuarioRepository;
 import com.recetas.recetasapp.repository.AlumnoRepository;
 import com.recetas.recetasapp.service.EmailService;
@@ -187,5 +188,62 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     public boolean emailExists(String email) {
         return usuarioRepository.existsByEmail(email);
+    }
+
+    // NUEVOS MÉTODOS PARA PERFIL DE USUARIO
+    @Override
+    public UsuarioPerfilDTO obtenerPerfil(Long userId) {
+        Usuario usuario = usuarioRepository.findById(userId)
+            .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + userId));
+        
+        return UsuarioPerfilDTO.builder()
+            .id(usuario.getId())
+            .nombre(usuario.getNombre())
+            .apellido(usuario.getApellido())
+            .alias(usuario.getAlias())
+            .email(usuario.getEmail())
+            .telefono(usuario.getTelefono())
+            .fotoPerfil(usuario.getFotoPerfil())
+            .build();
+    }
+
+    @Override
+    @Transactional
+    public UsuarioPerfilDTO actualizarPerfil(Long userId, UsuarioPerfilDTO perfilDTO) {
+        Usuario usuario = usuarioRepository.findById(userId)
+            .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + userId));
+        
+        // Actualizar solo los campos que no son nulos
+        if (perfilDTO.getNombre() != null && !perfilDTO.getNombre().trim().isEmpty()) {
+            usuario.setNombre(perfilDTO.getNombre().trim());
+        }
+        if (perfilDTO.getApellido() != null && !perfilDTO.getApellido().trim().isEmpty()) {
+            usuario.setApellido(perfilDTO.getApellido().trim());
+        }
+        if (perfilDTO.getTelefono() != null && !perfilDTO.getTelefono().trim().isEmpty()) {
+            usuario.setTelefono(perfilDTO.getTelefono().trim());
+        }
+        
+        Usuario usuarioActualizado = usuarioRepository.save(usuario);
+        
+        return UsuarioPerfilDTO.builder()
+            .id(usuarioActualizado.getId())
+            .nombre(usuarioActualizado.getNombre())
+            .apellido(usuarioActualizado.getApellido())
+            .alias(usuarioActualizado.getAlias())
+            .email(usuarioActualizado.getEmail())
+            .telefono(usuarioActualizado.getTelefono())
+            .fotoPerfil(usuarioActualizado.getFotoPerfil())
+            .build();
+    }
+
+    @Override
+    @Transactional
+    public void actualizarFotoPerfil(Long userId, String fotoUrl) {
+        Usuario usuario = usuarioRepository.findById(userId)
+            .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + userId));
+        
+        usuario.setFotoPerfil(fotoUrl);
+        usuarioRepository.save(usuario);
     }
 }

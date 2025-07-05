@@ -5,6 +5,7 @@ import com.recetas.recetasapp.entity.Alumno;
 import com.recetas.recetasapp.dto.AlumnoActualizarDTO;
 import com.recetas.recetasapp.dto.ConfirmacionCodigoDTO;
 import com.recetas.recetasapp.dto.ResetPasswordDto;
+import com.recetas.recetasapp.dto.UsuarioPerfilDTO;
 import com.recetas.recetasapp.dto.request.RecoveryRequestDTO;
 
 public interface UsuarioService {
@@ -19,5 +20,8 @@ public interface UsuarioService {
     String reenviarCodigoConfirmacion(String email);
     boolean aliasExists(String alias);/** Devuelve true si ya hay un usuario con este alias */
     boolean emailExists(String email);/** Devuelve true si ya hay un usuario con este email */
+    UsuarioPerfilDTO obtenerPerfil(Long userId);
+    UsuarioPerfilDTO actualizarPerfil(Long userId, UsuarioPerfilDTO perfilDTO);
+    void actualizarFotoPerfil(Long userId, String fotoUrl);
 }
 

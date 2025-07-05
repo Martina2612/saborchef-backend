@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import org.springframework.web.bind.annotation.*;
 
+import com.recetas.recetasapp.dto.BajaCursoResponse;
 import com.recetas.recetasapp.dto.CronogramaDTO;
 import com.recetas.recetasapp.dto.CursoDisponibleDTO;
 import com.recetas.recetasapp.dto.SedeDTO;
@@ -105,14 +106,30 @@ public ResponseEntity<String> inscribirAlumno(
 }
 
 @DeleteMapping("/{idCronograma}/{idAlumno}/baja")
-public ResponseEntity<String> darDeBaja(
+public ResponseEntity<BajaCursoResponse> darDeBaja(
         @PathVariable("idCronograma") Long idCronograma,
         @PathVariable("idAlumno") Long idAlumno) {
     try {
-        inscripcionCursoService.darDeBaja(idCronograma, idAlumno);
-        return ResponseEntity.ok("Alumno dado de baja con éxito");
+        BajaCursoResponse response = inscripcionCursoService.darDeBaja(idCronograma, idAlumno);
+        return ResponseEntity.ok(response);
     } catch (RuntimeException e) {
-        return ResponseEntity.badRequest().body("Error al dar de baja: " + e.getMessage());
+        BajaCursoResponse errorResponse = new BajaCursoResponse();
+        errorResponse.setMensaje("Error al dar de baja: " + e.getMessage());
+        return ResponseEntity.badRequest().body(errorResponse);
+    }
+}
+
+@GetMapping("/{idCronograma}/{idAlumno}/calcular-reintegro")
+public ResponseEntity<BajaCursoResponse> calcularReintegro(
+        @PathVariable("idCronograma") Long idCronograma,
+        @PathVariable("idAlumno") Long idAlumno) {
+    try {
+        BajaCursoResponse reintegroInfo = inscripcionCursoService.calcularReintegroSinEjecutar(idCronograma, idAlumno);
+        return ResponseEntity.ok(reintegroInfo);
+    } catch (RuntimeException e) {
+        BajaCursoResponse errorResponse = new BajaCursoResponse();
+        errorResponse.setMensaje("Error al calcular reintegro: " + e.getMessage());
+        return ResponseEntity.badRequest().body(errorResponse);
     }
 }
 

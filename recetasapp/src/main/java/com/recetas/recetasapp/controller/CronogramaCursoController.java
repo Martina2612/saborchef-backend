@@ -21,6 +21,7 @@ public class CronogramaCursoController {
 
     @GetMapping("/{id}")
     public ResponseEntity<CronogramaDTO> obtenerCronogramaPorId(@PathVariable("id") Long id) {
+        System.out.println("Buscando cursos para alumno ID: " + id);
         return cronogramaCursoService.obtenerPorId(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

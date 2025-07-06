@@ -532,23 +532,45 @@ public List<RecetaDetalleResponse> buscarPorFiltros(RecetaFiltroRequest filtro) 
     @Override
 @Transactional
 public RecetaEscaladaResponse escalarRecetaPorFactor(Long idReceta, Double factor) throws Exception {
+    System.out.println("=== SERVICE ESCALADO ===");
+    System.out.println("ID: " + idReceta + ", Factor: " + factor);
+    
     if (factor == null || factor <= 0) {
-        throw new IllegalArgumentException("El factor de escalado debe ser un número positivo.");
+        String msg = "El factor de escalado debe ser un número positivo. Factor: " + factor;
+        System.out.println("ERROR: " + msg);
+        throw new IllegalArgumentException(msg);
     }
     
     Optional<Receta> opt = recetaRepository.findById(idReceta);
     if (opt.isEmpty()) {
-        throw new ResourceNotFoundException("No se encontró la receta con id " + idReceta);
+        String msg = "No se encontró la receta con id " + idReceta;
+        System.out.println("ERROR: " + msg);
+        throw new ResourceNotFoundException(msg);
     }
     
     Receta receta = opt.get();
+    System.out.println("Receta: " + receta.getNombreReceta());
+    System.out.println("Porciones: " + receta.getPorciones());
+    System.out.println("Usuario: " + (receta.getUsuario() != null ? receta.getUsuario().getNombre() : "NULL"));
+    System.out.println("Tipo: " + (receta.getTipo() != null ? receta.getTipo().getDescripcion() : "NULL"));
     
-    // Validar que la receta tenga porciones válidas
+    // Verificar porciones válidas
     if (receta.getPorciones() == null || receta.getPorciones() <= 0) {
-        throw new IllegalStateException("La receta no tiene porciones válidas para escalar");
+        String msg = "La receta no tiene porciones válidas para escalar. Porciones: " + receta.getPorciones();
+        System.out.println("ERROR: " + msg);
+        throw new IllegalStateException(msg);
     }
     
-    return generarRecetaEscalada(receta, factor);
+    try {
+        System.out.println("Generando receta escalada...");
+        RecetaEscaladaResponse result = generarRecetaEscalada(receta, factor);
+        System.out.println("Generación exitosa");
+        return result;
+    } catch (Exception ex) {
+        System.out.println("ERROR en generarRecetaEscalada: " + ex.getMessage());
+        ex.printStackTrace();
+        throw ex;
+    }
 }
 
 @Override

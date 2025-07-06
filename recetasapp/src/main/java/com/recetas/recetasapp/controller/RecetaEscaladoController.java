@@ -1,8 +1,10 @@
 package com.recetas.recetasapp.controller;
 
 import com.recetas.recetasapp.dto.response.RecetaEscaladaResponse;
+import com.recetas.recetasapp.entity.Receta;
 import com.recetas.recetasapp.entity.Usuario;
 import com.recetas.recetasapp.exception.ResourceNotFoundException;
+import com.recetas.recetasapp.repository.RecetaRepository;
 import com.recetas.recetasapp.service.RecetaService;
 import com.recetas.recetasapp.service.UsuarioService;  
 import jakarta.validation.constraints.Min;
@@ -16,6 +18,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.HashMap;
+
 
 /**
  * Controlador específico para manejar el “escalado” de recetas y el guardado de las mismas.
@@ -27,6 +32,7 @@ public class RecetaEscaladoController {
 
     private RecetaService recetaService;
     private UsuarioService usuarioService; 
+    private RecetaRepository recetaRepository;
     // Asumo que tienes algún UsuarioService que te permite:
     // 1) Obtener el Usuario autenticado (para guardar recetas)
     // 2) O buscar Usuario por id, etc.
@@ -38,26 +44,65 @@ public class RecetaEscaladoController {
      */
     // En tu Controller de Recetas
 
-@GetMapping("/{id}/escalar")
-public ResponseEntity<?> escalarPorFactor(
+    @GetMapping("/{id}/escalar")
+public ResponseEntity<Object> escalarPorFactor(
         @PathVariable("id") Long idReceta,
         @RequestParam("factor") Double factor) {
+    
+    // Log de entrada para debugging
+    System.out.println("=== DEBUG ESCALADO ===");
+    System.out.println("ID Receta: " + idReceta);
+    System.out.println("Factor: " + factor);
+    
     try {
+        // Verificar que la receta existe primero
+        Optional<Receta> recetaOpt = recetaRepository.findById(idReceta);
+        if (recetaOpt.isEmpty()) {
+            System.out.println("ERROR: Receta no encontrada con ID: " + idReceta);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        
+        Receta receta = recetaOpt.get();
+        System.out.println("Receta encontrada: " + receta.getNombreReceta());
+        System.out.println("Porciones originales: " + receta.getPorciones());
+        
+        // Verificar porciones válidas
+        if (receta.getPorciones() == null || receta.getPorciones() <= 0) {
+            String errorMsg = "La receta no tiene porciones válidas. Porciones: " + receta.getPorciones();
+            System.out.println("ERROR: " + errorMsg);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMsg);
+        }
+        
+        // Verificar factor válido
+        if (factor == null || factor <= 0) {
+            String errorMsg = "Factor inválido: " + factor;
+            System.out.println("ERROR: " + errorMsg);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMsg);
+        }
+        
+        System.out.println("Llamando a escalarRecetaPorFactor...");
         RecetaEscaladaResponse resp = recetaService.escalarRecetaPorFactor(idReceta, factor);
-        return ResponseEntity.ok(resp);
+        System.out.println("Escalado exitoso");
+        
+        return ResponseEntity.status(HttpStatus.OK).body(resp);
+        
     } catch (ResourceNotFoundException ex) {
-        return ResponseEntity.notFound().build();
-    } catch (IllegalArgumentException | IllegalStateException ex) {
-        // Log del error para debugging
-        System.err.println("Error de validación en escalado: " + ex.getMessage());
-        return ResponseEntity.badRequest()
-                .body(Map.of("error", ex.getMessage()));
+        System.out.println("ERROR ResourceNotFoundException: " + ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+        
+    } catch (IllegalArgumentException ex) {
+        System.out.println("ERROR IllegalArgumentException: " + ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+        
+    } catch (IllegalStateException ex) {
+        System.out.println("ERROR IllegalStateException: " + ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+        
     } catch (Exception ex) {
-        // Log del error inesperado
-        System.err.println("Error inesperado en escalado: " + ex.getMessage());
+        System.out.println("ERROR Exception inesperada: " + ex.getMessage());
         ex.printStackTrace();
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "Error interno del servidor"));
+                .body("Error interno: " + ex.getMessage());
     }
 }
 

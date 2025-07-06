@@ -44,6 +44,9 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
             .requestMatchers("/api/usuarios/**").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/usuarios/perfil/**/foto").hasAnyAuthority("ROLE_USUARIO", "ROLE_ALUMNO")
 
+            .requestMatchers("/uploads/**").permitAll()
+
+
             // Visitantes pueden ver recetas, cursos (sin detalles)
             .requestMatchers(HttpMethod.GET, "/api/recetas/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/cursos/**").permitAll()

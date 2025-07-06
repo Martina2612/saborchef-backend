@@ -5,7 +5,6 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -31,9 +30,7 @@ public class Curso {
     private String requerimientos;
     private String duracion;
     private Double precio;
-    @ElementCollection(targetClass = Modalidad.class)
-    @Enumerated(EnumType.STRING)
-    private List<Modalidad> modalidades;
+    private String modalidad;
     private String imagenUrl;
     @Enumerated(EnumType.STRING)
     private Nivel nivel;

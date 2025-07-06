@@ -20,6 +20,8 @@ public interface InscripcionCursoRepository extends JpaRepository<InscripcionCur
     boolean existsByAlumnoAndCronograma(Alumno alumno, CronogramaCurso cronograma);
     Optional<InscripcionCurso> findByAlumno_IdAlumnoAndCronograma_IdCronograma(Long alumnoId, Long cronogramaId);
     List<InscripcionCurso> findByAlumno_IdAlumno(Long alumnoId);
+    // En InscripcionCursoRepository
+    List<InscripcionCurso> findByAlumno_Usuario_IdUsuario(Long idUsuario);
 
 }
 

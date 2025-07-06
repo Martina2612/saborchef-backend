@@ -2,16 +2,20 @@ package com.recetas.recetasapp.controller;
 
 import com.recetas.recetasapp.dto.response.RecetaEscaladaResponse;
 import com.recetas.recetasapp.entity.Usuario;
+import com.recetas.recetasapp.exception.ResourceNotFoundException;
 import com.recetas.recetasapp.service.RecetaService;
 import com.recetas.recetasapp.service.UsuarioService;  
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Controlador específico para manejar el “escalado” de recetas y el guardado de las mismas.
@@ -32,50 +36,75 @@ public class RecetaEscaladoController {
      *    - factor = 0.5 => la mitad
      *    - factor = 2.0 => el doble
      */
-    @GetMapping("/{id}/escalar")
-    public ResponseEntity<RecetaEscaladaResponse> escalarPorFactor(
-            @PathVariable("id") Long idReceta,
-            @RequestParam("factor") Double factor) {
-        try {
-            RecetaEscaladaResponse resp = recetaService.escalarRecetaPorFactor(idReceta, factor);
-            return ResponseEntity.ok(resp);
-        } catch (Exception ex) {
-            return ResponseEntity.badRequest().build();
-        }
-    }
+    // En tu Controller de Recetas
 
-    /**
-     * 2) Escalar por porciones deseadas:
-     *    - porcionesDeseadas = 4 => calcula factor = 4 / porcionesOriginal
-     */
-    @GetMapping("/{id}/escalar/porciones")
-    public ResponseEntity<RecetaEscaladaResponse> escalarPorPorciones(
-            @PathVariable("id") Long idReceta,
-            @RequestParam("porcionesDeseadas") @Min(1) Integer porcionesDeseadas) {
-        try {
-            RecetaEscaladaResponse resp = recetaService.escalarRecetaPorPorciones(idReceta, porcionesDeseadas);
-            return ResponseEntity.ok(resp);
-        } catch (Exception ex) {
-            return ResponseEntity.badRequest().build();
-        }
+@GetMapping("/{id}/escalar")
+public ResponseEntity<?> escalarPorFactor(
+        @PathVariable("id") Long idReceta,
+        @RequestParam("factor") Double factor) {
+    try {
+        RecetaEscaladaResponse resp = recetaService.escalarRecetaPorFactor(idReceta, factor);
+        return ResponseEntity.ok(resp);
+    } catch (ResourceNotFoundException ex) {
+        return ResponseEntity.notFound().build();
+    } catch (IllegalArgumentException | IllegalStateException ex) {
+        // Log del error para debugging
+        System.err.println("Error de validación en escalado: " + ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body(Map.of("error", ex.getMessage()));
+    } catch (Exception ex) {
+        // Log del error inesperado
+        System.err.println("Error inesperado en escalado: " + ex.getMessage());
+        ex.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Error interno del servidor"));
     }
+}
 
-    /**
-     * 3) Escalar por cantidad de un ingrediente:
-     *    - ingredienteId = 7, nuevaCantidad = 200 => factor = 200 / cantidadOriginalDelIngrediente(7)
-     */
-    @GetMapping("/{id}/escalar/porIngrediente")
-    public ResponseEntity<RecetaEscaladaResponse> escalarPorIngrediente(
-            @PathVariable("id") Long idReceta,
-            @RequestParam("ingredienteId") Long ingredienteId,
-            @RequestParam("cantidad") Double cantidad) {
-        try {
-            RecetaEscaladaResponse resp = recetaService.escalarRecetaPorIngrediente(idReceta, ingredienteId, cantidad);
-            return ResponseEntity.ok(resp);
-        } catch (Exception ex) {
-            return ResponseEntity.badRequest().build();
-        }
+// Endpoint para escalar por porciones deseadas (más intuitivo)
+@GetMapping("/{id}/escalar/porciones")
+public ResponseEntity<?> escalarPorPorciones(
+        @PathVariable("id") Long idReceta,
+        @RequestParam("porciones") Integer porcionesDeseadas) {
+    try {
+        RecetaEscaladaResponse resp = recetaService.escalarRecetaPorPorciones(idReceta, porcionesDeseadas);
+        return ResponseEntity.ok(resp);
+    } catch (ResourceNotFoundException ex) {
+        return ResponseEntity.notFound().build();
+    } catch (IllegalArgumentException | IllegalStateException ex) {
+        System.err.println("Error de validación en escalado por porciones: " + ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body(Map.of("error", ex.getMessage()));
+    } catch (Exception ex) {
+        System.err.println("Error inesperado en escalado por porciones: " + ex.getMessage());
+        ex.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Error interno del servidor"));
     }
+}
+
+// Endpoint para escalar por ingrediente específico
+@GetMapping("/{id}/escalar/ingrediente")
+public ResponseEntity<?> escalarPorIngrediente(
+        @PathVariable("id") Long idReceta,
+        @RequestParam("ingredienteId") Long ingredienteId,
+        @RequestParam("cantidad") Double nuevaCantidad) {
+    try {
+        RecetaEscaladaResponse resp = recetaService.escalarRecetaPorIngrediente(idReceta, ingredienteId, nuevaCantidad);
+        return ResponseEntity.ok(resp);
+    } catch (ResourceNotFoundException ex) {
+        return ResponseEntity.notFound().build();
+    } catch (IllegalArgumentException | IllegalStateException ex) {
+        System.err.println("Error de validación en escalado por ingrediente: " + ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body(Map.of("error", ex.getMessage()));
+    } catch (Exception ex) {
+        System.err.println("Error inesperado en escalado por ingrediente: " + ex.getMessage());
+        ex.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Error interno del servidor"));
+    }
+}
 
     /**
      * 4) Guardar (persistir) una versión escalada de la receta. 

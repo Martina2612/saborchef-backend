@@ -530,40 +530,49 @@ public List<RecetaDetalleResponse> buscarPorFiltros(RecetaFiltroRequest filtro) 
      * Factoriza la receta con un factor fijo (por ejemplo 0.5, 2.0, etc.).
      */
     @Override
-    @Transactional
-    public RecetaEscaladaResponse escalarRecetaPorFactor(Long idReceta, Double factor) throws Exception {
-        if (factor == null || factor <= 0) {
-            throw new IllegalArgumentException("El factor de escalado debe ser un número positivo.");
-        }
-        Optional<Receta> opt = recetaRepository.findById(idReceta);
-        if (opt.isEmpty()) {
-            throw new Exception("No se encontró la receta con id " + idReceta);
-        }
-        Receta receta = opt.get();
-        return generarRecetaEscalada(receta, factor);
+@Transactional
+public RecetaEscaladaResponse escalarRecetaPorFactor(Long idReceta, Double factor) throws Exception {
+    if (factor == null || factor <= 0) {
+        throw new IllegalArgumentException("El factor de escalado debe ser un número positivo.");
     }
+    
+    Optional<Receta> opt = recetaRepository.findById(idReceta);
+    if (opt.isEmpty()) {
+        throw new ResourceNotFoundException("No se encontró la receta con id " + idReceta);
+    }
+    
+    Receta receta = opt.get();
+    
+    // Validar que la receta tenga porciones válidas
+    if (receta.getPorciones() == null || receta.getPorciones() <= 0) {
+        throw new IllegalStateException("La receta no tiene porciones válidas para escalar");
+    }
+    
+    return generarRecetaEscalada(receta, factor);
+}
 
-    /**
-     * Cálculo de factor a partir de porciones deseadas: porcDeseada / porcionesOriginal.
-     */
-    @Override
-    @Transactional
-    public RecetaEscaladaResponse escalarRecetaPorPorciones(Long idReceta, Integer porcionesDeseadas) throws Exception {
-        if (porcionesDeseadas == null || porcionesDeseadas <= 0) {
-            throw new IllegalArgumentException("Las porciones deseadas deben ser un entero positivo.");
-        }
-        Optional<Receta> opt = recetaRepository.findById(idReceta);
-        if (opt.isEmpty()) {
-            throw new Exception("No se encontró la receta con id " + idReceta);
-        }
-        Receta receta = opt.get();
-        Integer porcionesOriginal = receta.getPorciones();
-        if (porcionesOriginal == null || porcionesOriginal <= 0) {
-            throw new IllegalStateException("La receta original no tiene porciones válidas.");
-        }
-        Double factor = porcionesDeseadas.doubleValue() / porcionesOriginal.doubleValue();
-        return generarRecetaEscalada(receta, factor);
+@Override
+@Transactional
+public RecetaEscaladaResponse escalarRecetaPorPorciones(Long idReceta, Integer porcionesDeseadas) throws Exception {
+    if (porcionesDeseadas == null || porcionesDeseadas <= 0) {
+        throw new IllegalArgumentException("Las porciones deseadas deben ser un entero positivo.");
     }
+    
+    Optional<Receta> opt = recetaRepository.findById(idReceta);
+    if (opt.isEmpty()) {
+        throw new ResourceNotFoundException("No se encontró la receta con id " + idReceta);
+    }
+    
+    Receta receta = opt.get();
+    Integer porcionesOriginal = receta.getPorciones();
+    
+    if (porcionesOriginal == null || porcionesOriginal <= 0) {
+        throw new IllegalStateException("La receta original no tiene porciones válidas.");
+    }
+    
+    Double factor = porcionesDeseadas.doubleValue() / porcionesOriginal.doubleValue();
+    return generarRecetaEscalada(receta, factor);
+}
 
     /**
      * Cálculo de factor a partir de la cantidad de un ingrediente concreto:
@@ -606,22 +615,29 @@ public List<RecetaDetalleResponse> buscarPorFiltros(RecetaFiltroRequest filtro) 
     private RecetaEscaladaResponse generarRecetaEscalada(Receta receta, Double factor) {
         // 1) Calcular nueva cantidad de porciones
         Integer porcionesOriginal = receta.getPorciones();
-        Integer porcionesEscaladas = (porcionesOriginal != null)
-                ? (int) Math.round(porcionesOriginal * factor)
-                : null;
-
+        Integer porcionesEscaladas = null;
+        
+        if (porcionesOriginal != null && porcionesOriginal > 0) {
+            porcionesEscaladas = (int) Math.round(porcionesOriginal * factor);
+            // Asegurar que las porciones escaladas sean al menos 1
+            porcionesEscaladas = Math.max(1, porcionesEscaladas);
+        }
+    
         // 2) Obtener todos los utilizados y multiplicar cantidades
         List<Utilizado> listaUtilizados = utilizadoRepository.findAllByRecetaIdReceta(receta.getIdReceta());
-
+    
         List<IngredienteCantidadDTO> ingredientesDTO = listaUtilizados.stream().map(u -> {
             Ingrediente ingr = u.getIngrediente();
             Unidad unidad = u.getUnidad();
-
+    
             Double cantidadOriginal = u.getCantidad();
             Double cantidadEscalada = null;
-            if (cantidadOriginal != null) {
+            if (cantidadOriginal != null && cantidadOriginal > 0) {
                 cantidadEscalada = cantidadOriginal * factor;
+                // Redondear a 2 decimales para mejor presentación
+                cantidadEscalada = Math.round(cantidadEscalada * 100.0) / 100.0;
             }
+            
             return new IngredienteCantidadDTO(
                     ingr.getIdIngrediente(),
                     ingr.getNombre(),
@@ -630,7 +646,7 @@ public List<RecetaDetalleResponse> buscarPorFiltros(RecetaFiltroRequest filtro) 
                     u.getObservaciones()
             );
         }).collect(Collectors.toList());
-
+    
         // 3) Armar el DTO final
         RecetaEscaladaResponse resp = new RecetaEscaladaResponse();
         resp.setIdRecetaOriginal(receta.getIdReceta());
@@ -642,7 +658,7 @@ public List<RecetaDetalleResponse> buscarPorFiltros(RecetaFiltroRequest filtro) 
         resp.setPorcionesEscaladas(porcionesEscaladas);
         resp.setFactorEscalado(factor);
         resp.setIngredientes(ingredientesDTO);
-
+    
         return resp;
     }
 

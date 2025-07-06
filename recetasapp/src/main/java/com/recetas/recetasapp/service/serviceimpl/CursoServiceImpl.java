@@ -40,7 +40,7 @@ public List<CursoDisponibleDTO> listarCursosDisponibles(Long idUsuario) {
         cursosInscriptos = List.of(); // Lista vacía
     } else {
         // Para usuarios autenticados: obtener sus inscripciones
-        cursosInscriptos = inscripcionCursoRepository.findByAlumno_Usuario_IdUsuario(idUsuario).stream()
+        cursosInscriptos = inscripcionCursoRepository.findByAlumno_IdAlumno(idUsuario).stream()
             .map(insc -> insc.getCronograma().getCurso().getIdCurso())
             .distinct()
             .toList();

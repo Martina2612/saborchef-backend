@@ -42,6 +42,7 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
             
             // Regla más general de usuarios
             .requestMatchers("/api/usuarios/**").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/usuarios/perfil/**/foto").hasAnyAuthority("ROLE_USUARIO", "ROLE_ALUMNO")
 
             // Visitantes pueden ver recetas, cursos (sin detalles)
             .requestMatchers(HttpMethod.GET, "/api/recetas/**").permitAll()

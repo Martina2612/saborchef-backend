@@ -178,7 +178,7 @@ public class UsuarioController {
             Files.copy(file.getInputStream(), filePath);
             
             // Actualizar URL en base de datos
-            String fotoUrl = "/uploads/profile_photos/" + fileName;
+            String fotoUrl = "/api/imagenes/perfil/" + fileName;
             usuarioService.actualizarFotoPerfil(userId, fotoUrl);
             
             return ResponseEntity.ok(Map.of("fotoUrl", fotoUrl));

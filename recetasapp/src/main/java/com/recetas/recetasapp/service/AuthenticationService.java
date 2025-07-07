@@ -78,9 +78,9 @@ public class AuthenticationService {
     
         // Enviar código por email
         String asunto = "Confirmación de cuenta";
-        String texto = "Hola " + user.getNombre() + ",\n\n"
+        String texto = "Hola " + user.getAlias() + ",\n\n"
                 + "Tu código de confirmación es: " + codigoGenerado + "\n"
-                + "Este código es válido por 1 hora.\n\n"
+                + "Este código es válido por un día.\n\n"
                 + "¡Gracias por registrarte en SaborChef!";
         emailService.enviarEmail(user.getEmail(), asunto, texto);
     

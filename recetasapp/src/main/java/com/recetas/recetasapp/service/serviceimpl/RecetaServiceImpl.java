@@ -141,7 +141,7 @@ public void crearReceta(RecetaCrearRequest req) {
             .orElseGet(() -> ingredienteRepository.save(new Ingrediente(null, ic.getNombreIngrediente())));
 
         var unidadDesc = ic.getUnidad().toLowerCase(Locale.ROOT);
-        var unidadesValidas = List.of("kg", "gr", "ml", "litros", "unid.");
+        var unidadesValidas = List.of("kg", "gr", "ml", "l.", "unid.");
         if (!unidadesValidas.contains(unidadDesc)) {
             throw new ResourceNotFoundException("Unidad inválida: " + ic.getUnidad());
         }
@@ -229,7 +229,7 @@ public void crearReceta(RecetaCrearRequest req) {
                     .orElseGet(() -> ingredienteRepository.save(new Ingrediente(null, ic.getNombreIngrediente())));
 
             var uniDesc = ic.getUnidad().toLowerCase(Locale.ROOT);
-            var valid = List.of("kg","gr","ml","litros","unidad");
+            var valid = List.of("kg","gr","ml","l.","unid.");
             if (!valid.contains(uniDesc)) {
                 throw new ResourceNotFoundException("Unidad inválida: " + ic.getUnidad());
             }

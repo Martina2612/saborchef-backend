@@ -21,4 +21,12 @@ public class RecetaEscaladaResponse {
     private Integer porcionesEscaladas; // Cantidad de porciones escaladas calculadas
     private Double factorEscalado;     // Factor usado para escalar (por ejemplo 0.5, 2.0, etc.)
     private List<IngredienteCantidadDTO> ingredientes; // Ingredientes con cantidades escaladas
+    private Long idRecetaGuardada;
+    public Long getIdRecetaGuardada() {
+        return idRecetaGuardada;
+    }
+
+    public void setIdRecetaGuardada(Long idRecetaGuardada) {
+        this.idRecetaGuardada = idRecetaGuardada;
+    }
 }

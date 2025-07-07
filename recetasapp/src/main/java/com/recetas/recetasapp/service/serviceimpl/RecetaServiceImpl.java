@@ -716,22 +716,25 @@ public RecetaEscaladaResponse escalarRecetaPorPorciones(Long idReceta, Integer p
     }
 
     @Override
-    @Transactional
-    public List<RecetaEscaladaResponse> listarRecetasEscaladasGuardadas(Usuario usuario) {
-        if (usuario == null) {
-            return Collections.emptyList();
-        }
-        List<RecetaEditada> lista = recetaGuardadaRepository.findAllByUsuario(usuario);
-        // Por cada guardada, recupero datos y genero el DTO (con el factor almacenado).
-        return lista.stream()
-                .map(rg -> {
-                    Receta r = rg.getRecetaOriginal();
-                    Double factor = rg.getFactorEscalado();
-                    // Reuso la función para generar la receta escalada:
-                    return generarRecetaEscalada(r, factor);
-                })
-                .collect(Collectors.toList());
+@Transactional
+public List<RecetaEscaladaResponse> listarRecetasEscaladasGuardadas(Usuario usuario) {
+    if (usuario == null) {
+        return Collections.emptyList();
     }
+    List<RecetaEditada> lista = recetaGuardadaRepository.findAllByUsuario(usuario);
+    // Por cada guardada, recupero datos y genero el DTO (con el factor almacenado).
+    return lista.stream()
+            .map(rg -> {
+                Receta r = rg.getRecetaOriginal();
+                Double factor = rg.getFactorEscalado();
+                // Reuso la función para generar la receta escalada:
+                RecetaEscaladaResponse response = generarRecetaEscalada(r, factor);
+                // ✅ AGREGAR: Setear el ID de la receta guardada
+                response.setIdRecetaGuardada(rg.getId()); // ID de la tabla recetas_guardadas
+                return response;
+            })
+            .collect(Collectors.toList());
+}
 
     @Override
     @Transactional
